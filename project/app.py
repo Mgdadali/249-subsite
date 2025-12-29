@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv("SECRET_KEY", "249-secret-key")
 
-# ================== Google Sheets Setup ==================
+# ================== Google Sheets ==================
 scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]
 google_creds_json = os.getenv("GOOGLE_CREDENTIALS")
 if not google_creds_json:
@@ -26,24 +26,17 @@ admins_sheet    = spreadsheet.worksheet("Admins")
 def admin_required():
     return "admin" in session
 
-# ================== Routes ==================
-
-# --- Home Page ---
+# ================== Home Page ==================
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# --- Client Checklist ---
-@app.route("/client/<code>")
-def client_page(code):
-    return render_template("checklist.html", code=code.strip().upper())
-
-# --- API: Track Client ---
+# ================== Client Tracking ==================
 @app.route("/track")
 def track():
     code = request.args.get("code", "").strip().upper()
     if not code:
-        return jsonify({"error":"الرجاء إدخال كود المتابعة"}),400
+        return jsonify({"error": "الرجاء إدخال كود المتابعة"}), 400
 
     clients = clients_sheet.get_all_records()
     client_data = None
@@ -51,18 +44,15 @@ def track():
         if str(row["TrackingCode"]).strip().upper() == code:
             client_data = row
             break
-    if not client_data:
-        return jsonify({"error":"كود المتابعة غير صحيح"}),404
 
-    # Load checklist
+    if not client_data:
+        return jsonify({"error": "كود المتابعة غير صحيح"}), 404
+
     steps = []
     checklist = checklist_sheet.get_all_records()
     for step in checklist:
         if str(step["TrackingCode"]).strip().upper() == code:
-            steps.append({
-                "name": step["StepName"],
-                "done": bool(step["Done"])
-            })
+            steps.append({"name": step["StepName"], "done": bool(step["Done"])})
 
     return jsonify({
         "name": client_data["Name"],
@@ -70,55 +60,58 @@ def track():
         "checklist": steps
     })
 
-# --- Admin Login ---
+# ================== Admin Login ==================
 @app.route("/admin", methods=["GET","POST"])
 def admin_login():
-    if request.method=="POST":
+    if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
         admins = admins_sheet.get_all_records()
         for admin in admins:
-            if admin["Username"]==username and str(admin["Password"])==password:
-                session["admin"]=username
+            if admin["Username"] == username and str(admin["Password"]) == password:
+                session["admin"] = username
                 return redirect("/admin/dashboard")
         return "بيانات الدخول غير صحيحة ❌"
     return render_template("admin_login.html")
 
-# --- Admin Dashboard ---
+# ================== Admin Dashboard ==================
 @app.route("/admin/dashboard")
 def admin_dashboard():
-    if not admin_required(): return redirect("/admin")
+    if not admin_required():
+        return redirect("/admin")
     return render_template("admin_dashboard.html")
 
-# --- Add Client ---
+# ================== Add Client ==================
 @app.route("/admin/add-client", methods=["GET","POST"])
 def add_client():
-    if not admin_required(): return redirect("/admin")
-    if request.method=="POST":
+    if not admin_required():
+        return redirect("/admin")
+    if request.method == "POST":
         name = request.form.get("name")
         service = request.form.get("service")
         tracking_code = secrets.token_hex(4).upper()
-        clients_sheet.append_row([tracking_code,name,service])
-        return f"<p>تم إضافة العميل ✅ كود المتابعة: <b>{tracking_code}</b></p><a href='/admin/dashboard'>رجوع</a>"
+        clients_sheet.append_row([tracking_code, name, service])
+        return f"<p>تم إضافة العميل بنجاح ✅</p><p>كود المتابعة: <b>{tracking_code}</b></p><a href='/admin/dashboard'>رجوع</a>"
     return render_template("admin_add.html")
 
-# --- Manage Checklist ---
+# ================== Manage Checklist ==================
 @app.route("/admin/manage", methods=["GET","POST"])
 def manage_steps():
-    if not admin_required(): return redirect("/admin")
-    if request.method=="POST":
+    if not admin_required():
+        return redirect("/admin")
+    if request.method == "POST":
         code = request.form.get("code").strip().upper()
         step = request.form.get("step")
-        checklist_sheet.append_row([code,step,False])
+        checklist_sheet.append_row([code, step, False])
         return "تمت إضافة المرحلة ✅ <br><a href='/admin/manage'>رجوع</a>"
     return render_template("admin_manage.html")
 
-# --- Logout ---
+# ================== Admin Logout ==================
 @app.route("/admin/logout")
 def admin_logout():
     session.clear()
     return redirect("/admin")
 
 # ================== Run ==================
-if __name__=="__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT",5000)))
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
