@@ -1,19 +1,24 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>249 | متابعة الطلب</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <title>249 | متابعة الطلب</title>
+    <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-<div class="container">
-    <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249 Logo" class="logo">
-    <h1>متابعة الطلبات</h1>
-    <p>من فضلك أدخل كود المتابعة:</p>
-    <input type="text" id="code" placeholder="كود المتابعة">
-    <button onclick="track()">متابعة الطلب</button>
-    <div id="result"></div>
-</div>
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+    <div class="container">
+        <!-- شعار الشركة -->
+        <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249 Logo" class="logo">
+
+        <h1>مرحبا بك في 249</h1>
+        <p>تابع طلبك بسهولة باستخدام كود المتابعة الخاص بك</p>
+
+        <input type="text" id="code" placeholder="كود المتابعة">
+        <button onclick="track()">متابعة الطلب</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script src="static/script.js"></script>
 </body>
 </html>
