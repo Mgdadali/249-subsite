@@ -1,3 +1,5 @@
+import os
+import json
 from flask import Flask, request, jsonify
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -11,12 +13,21 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    "credentials.json", scope
+# قراءة credentials من Environment Variable
+google_creds_json = os.getenv("GOOGLE_CREDENTIALS")
+
+if not google_creds_json:
+    raise Exception("GOOGLE_CREDENTIALS environment variable not set")
+
+creds_dict = json.loads(google_creds_json)
+
+creds = ServiceAccountCredentials.from_json_keyfile_dict(
+    creds_dict, scope
 )
 
 client = gspread.authorize(creds)
 sheet = client.open("249 – Customer Tracking").sheet1
+
 
 @app.route("/track")
 def track():
