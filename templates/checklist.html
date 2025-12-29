@@ -1,41 +1,35 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>249 | سير الطلب</title>
-    <link rel="stylesheet" href="/frontend/style.css">
+<meta charset="UTF-8">
+<title>249 | سير الطلب</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <div class="container">
-    <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249 Logo" class="logo">
+    <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" class="logo">
     <h1>تفاصيل الطلب</h1>
-    <div id="clientName"></div>
-    <div id="service"></div>
-    <div id="checklist"></div>
-    <p class="date" id="lastUpdate"></p>
+    <p id="clientName"></p>
+    <p id="service"></p>
+    <ul class="checklist" id="checklist"></ul>
 </div>
-
-<script src="/frontend/script.js"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 <script>
-const code = window.location.pathname.split("/client/")[1];
+const code = "{{ code }}";
 fetch(`/track?code=${code}`)
 .then(res=>res.json())
 .then(data=>{
-    if(data.error){
-        document.getElementById("clientName").innerHTML = `<strong>${data.error}</strong>`;
-        return;
-    }
-    document.getElementById("clientName").innerHTML = `<strong>الاسم:</strong> ${data.name}`;
-    document.getElementById("service").innerHTML = `<strong>الخدمة:</strong> ${data.service}`;
-
-    let html = '<ul class="checklist">';
+    if(data.error){ document.getElementById("clientName").innerHTML=data.error; return; }
+    document.getElementById("clientName").innerHTML = `الاسم: ${data.name}`;
+    document.getElementById("service").innerHTML = `الخدمة: ${data.service}`;
+    const ul = document.getElementById("checklist");
     data.checklist.forEach(step=>{
-        html += `<li class="${step.done?'done':''}">${step.name}</li>`;
+        const li = document.createElement("li");
+        li.textContent = step.name;
+        if(step.done) li.classList.add("done");
+        ul.appendChild(li);
     });
-    html += '</ul>';
-    document.getElementById("checklist").innerHTML = html;
-})
-.catch(()=>{ document.getElementById("clientName").innerHTML = "حدث خطأ في الاتصال"; });
+});
 </script>
 </body>
 </html>
