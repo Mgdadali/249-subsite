@@ -1,0 +1,48 @@
+body{
+    font-family: "Cairo", Tahoma, sans-serif;
+    background:#f4f7fb;
+}
+
+.container{
+    max-width:420px;
+    margin:80px auto;
+    background:#fff;
+    padding:40px;
+    border-radius:14px;
+    text-align:center;
+    box-shadow:0 15px 40px rgba(0,0,0,.1);
+}
+
+.wide{ max-width:600px; }
+
+.logo{ max-width:160px; margin-bottom:15px; }
+.logo.small{ max-width:120px; }
+
+button{
+    background:#1e90ff;
+    color:#fff;
+    border:none;
+    padding:12px;
+    width:100%;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.checklist{
+    list-style:none;
+    padding:0;
+}
+
+.checklist li{
+    display:flex;
+    justify-content:space-between;
+    padding:12px;
+    margin:8px 0;
+    background:#eef4ff;
+    border-radius:8px;
+}
+
+.checklist li.done{
+    background:#d4f8e8;
+    color:#0a7d43;
+}
