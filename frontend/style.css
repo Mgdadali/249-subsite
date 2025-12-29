@@ -1,65 +1,67 @@
 body {
-    font-family: Tahoma, Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
     background: #f2f6fb;
     margin: 0;
     padding: 0;
     direction: rtl;
 }
 .container {
-    max-width: 450px;
-    margin: 80px auto;
+    max-width: 500px;
+    margin: 50px auto;
     background: #fff;
-    padding: 40px 30px;
-    border-radius: 12px;
-    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+    padding: 45px 35px;
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.08);
     text-align: center;
 }
 .logo {
-    max-width: 150px;
-    margin-bottom: 15px;
+    max-width: 180px;
+    margin-bottom: 20px;
 }
 h1 {
     color: #0a3d62;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: bold;
 }
 input {
     width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 6px;
+    padding: 14px;
+    margin: 12px 0;
+    border-radius: 8px;
     border: 1px solid #ccc;
-    font-size: 15px;
+    font-size: 16px;
 }
 button {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     background: linear-gradient(90deg,#0a3d62,#1e90ff);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 17px;
+    margin-top: 10px;
 }
 button:hover { opacity: 0.9; }
 .card {
-    margin-top: 25px;
+    margin-top: 30px;
     background: #f9fbff;
-    padding: 22px;
-    border-radius: 10px;
+    padding: 25px;
+    border-radius: 12px;
     text-align: right;
-    border-right: 5px solid #0a3d62;
+    border-right: 6px solid #0a3d62;
 }
 .progress {
     background: #e4ebf3;
-    border-radius: 20px;
-    height: 12px;
-    margin: 12px 0;
+    border-radius: 25px;
+    height: 14px;
+    margin: 15px 0;
     overflow: hidden;
 }
 .progress-bar {
     height: 100%;
     width: 0;
-    background: linear-gradient(90deg,#0a3d62,#1e90ff);
-    transition: width 0.6s ease;
+    transition: width 0.6s ease, background-color 0.6s ease;
 }
-.date { font-size: 13px; color: #6c7a89; margin-top: 8px; }
+.date { font-size: 14px; color: #6c7a89; margin-top: 10px; }
