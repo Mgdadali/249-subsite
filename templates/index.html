@@ -1,76 +1,26 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>249 | متابعة الطلب</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>249 | متابعة الطلب</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
 <div class="container">
-    <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" class="logo" alt="249 Logo">
-
-    <h1>متابعة سير الطلب</h1>
-    <input type="text" id="code" placeholder="أدخل كود المتابعة">
-    <button onclick="track()">عرض المراحل</button>
-
+    <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" class="logo">
+    <h1>متابعة سير الطلبات</h1>
+    <p>أدخل كود المتابعة:</p>
+    <input type="text" id="codeInput" placeholder="كود المتابعة">
+    <button onclick="trackHome()">متابعة الطلب</button>
     <div id="result"></div>
 </div>
-
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 <script>
-function track() {
-    const code = document.getElementById("code").value.trim().toUpperCase();
-    const result = document.getElementById("result");
-
-    if (!code) {
-        alert("من فضلك أدخل كود المتابعة");
-        return;
-    }
-
-    result.innerHTML = "جاري التحميل...";
-
-    fetch(`/track?code=${code}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                result.innerHTML = `<p class="error">${data.error}</p>`;
-                return;
-            }
-
-            // عرض المراحل كـ Checklist
-            let checklistHTML = `
-                <div class="checklist-card">
-                    <h2>مراحل الطلب</h2>
-            `;
-
-            data.steps.forEach(step => {
-                checklistHTML += `
-                    <div class="checklist-item">
-                        <span class="item-text">${step.name}</span>
-                        ${step.done ? '<span class="check-icon done">✔️</span>' : '<span class="check-icon not-done">⭕</span>'}
-                    </div>
-                `;
-            });
-
-            checklistHTML += `</div>`;
-
-            // نسبة التقدم
-            const percent = Math.round((data.completedCount / data.steps.length) * 100);
-
-            result.innerHTML = `
-                ${checklistHTML}
-
-                <div class="progress-label">نسبة الإنجاز: ${percent}%</div>
-                <div class="progress">
-                    <div class="progress-bar" style="width:${percent}%"></div>
-                </div>
-            `;
-        })
-        .catch(() => {
-            result.innerHTML = "<p class='error'>حدث خطأ في الاتصال بالخادم</p>";
-        });
+function trackHome(){
+    const code = document.getElementById("codeInput").value.trim().toUpperCase();
+    if(!code){ alert("من فضلك أدخل كود المتابعة"); return; }
+    window.location.href = `/client/${code}`;
 }
 </script>
-
 </body>
 </html>
