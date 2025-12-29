@@ -39,32 +39,38 @@ function track() {
                 return;
             }
 
+            // تحديد لون الشريط حسب الحالة
+            let progressColor = (data.status.toLowerCase() === "مكتمل" || data.status.toLowerCase() === "complete") ? "#28a745" : "#1e90ff";
+
             result.innerHTML = `
                 <div class="card">
                     <p><strong>الاسم:</strong> ${data.name}</p>
                     <p><strong>الخدمة:</strong> ${data.service}</p>
                     <p><strong>الحالة:</strong> ${data.status}</p>
                     <p><strong>المرحلة الحالية:</strong> ${data.step}</p>
+                    
                     <div class="progress">
-                        <div class="progress-bar" style="width:${getProgress(data.status)}%"></div>
+                        <div class="progress-bar" style="width:${getProgress(data.status)}%; background-color:${progressColor};"></div>
                     </div>
+
                     <p><strong>ملاحظات:</strong> ${data.notes}</p>
                     <p class="date"><strong>آخر تحديث:</strong> ${data.last_update}</p>
                 </div>
             `;
         })
-        .catch(() => { result.innerHTML = "حدث خطأ في الاتصال"; });
+        .catch(() => { result.innerHTML = "حدث خطأ في الاتصال بالخادم"; });
 }
 
 function getProgress(status){
     const map = {
-        "مستلم": 20,
-        "قيد الإجراء": 40,
-        "تم التقديم": 60,
-        "بانتظار الرد": 80,
-        "مكتمل": 100
+        "مستلم": 50,
+        "قيد الإجراء": 50,
+        "تم التقديم": 50,
+        "بانتظار الرد": 50,
+        "مكتمل": 100,
+        "complete": 100
     };
-    return map[status] || 30;
+    return map[status] || 50;
 }
 </script>
 </body>
