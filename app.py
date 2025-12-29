@@ -1,24 +1,32 @@
-import os, json, gspread
+import os
+import json
+import gspread
 from flask import Flask, request, jsonify, send_from_directory
 from oauth2client.service_account import ServiceAccountCredentials
 from flask_cors import CORS
 
+# ==============================
+# إعداد Flask
+# ==============================
 app = Flask(__name__, static_folder="frontend")
 CORS(app)
 
 # ==============================
-# Google Sheets Setup
+# إعداد Google Sheets
 # ==============================
 scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]
 google_creds_json = os.getenv("GOOGLE_CREDENTIALS")
+
 if not google_creds_json:
     raise Exception("GOOGLE_CREDENTIALS environment variable not set")
-creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(google_creds_json), scope)
+
+creds_dict = json.loads(google_creds_json)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open("249 – Customer Tracking").sheet1
 
 # ==============================
-# Serve Frontend
+# Routes للواجهة
 # ==============================
 @app.route("/")
 def serve_index():
@@ -35,19 +43,22 @@ def serve_static(path):
 def track():
     code = request.args.get("code", "").strip().upper()
     if not code:
-        return jsonify({"error":"الرجاء إدخال كود المتابعة"}),400
+        return jsonify({"error":"الرجاء إدخال كود المتابعة"}), 400
 
-    for row in sheet.get_all_records():
-        if row["TrackingCode"].strip().upper() == code:
+    records = sheet.get_all_records()
+    for row in records:
+        tracking_code = str(row.get("TrackingCode", "")).strip().upper()
+        if tracking_code == code:
             return jsonify({
-                "name": row["Name"],  # الاسم من Google Sheet فقط
-                "service": row["Service"],
-                "status": row["Status"],
-                "step": row["CurrentStep"],
-                "notes": row["Notes"],
-                "last_update": row["LastUpdate"]
+                "name": row.get("Name", ""),
+                "service": row.get("Service", ""),
+                "status": row.get("Status", ""),
+                "step": row.get("CurrentStep", ""),
+                "notes": row.get("Notes", ""),
+                "last_update": row.get("LastUpdate", "")
             })
-    return jsonify({"error":"كود المتابعة غير صحيح"}),404
+
+    return jsonify({"error":"كود المتابعة غير صحيح"}), 404
 
 # ==============================
 # تشغيل التطبيق
