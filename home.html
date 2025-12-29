@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>249 | متابعة الطلب</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="container">
+    <img src="/static/img/logo.png" class="logo">
+
+    <h1>متابعة سير الطلب</h1>
+    <p>أدخل كود المتابعة الخاص بك</p>
+
+    <input type="text" id="codeInput" placeholder="كود المتابعة">
+    <button onclick="goTrack()">متابعة</button>
+</div>
+
+<script>
+function goTrack(){
+    const code = document.getElementById("codeInput").value.trim();
+    if(!code){ alert("أدخل كود المتابعة"); return; }
+    window.location.href = `/client/${code}`;
+}
+</script>
+
+</body>
+</html>
