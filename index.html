@@ -2,21 +2,70 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>249 | متابعة الإجراءات</title>
+    <title>249 | متابعة الطلب</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <div class="container">
-    <h1>متابعة سير الإجراءات</h1>
-    <p class="subtitle">أدخل كود المتابعة الخاص بك</p>
+    <!-- شعار الشركة -->
+    <img src="https://example.com/logo.png" alt="249 Logo" class="logo">
 
-    <input type="text" id="codeInput" placeholder="مثال: 249-A9F3KQ7">
+    <h1>متابعة سير الطلبات</h1>
+    <p>من فضلك أدخل كود المتابعة:</p>
+
+    <input type="text" id="code" placeholder="كود المتابعة">
     <button onclick="track()">متابعة الطلب</button>
 
-    <div id="result" class="card hidden"></div>
+    <div id="result"></div>
 </div>
 
-<script src="script.js"></script>
+<script>
+function track() {
+    const code = document.getElementById("code").value.trim().toUpperCase();
+    const result = document.getElementById("result");
+
+    if (!code) {
+        alert("من فضلك أدخل كود المتابعة");
+        return;
+    }
+
+    result.innerHTML = "جاري البحث...";
+
+    fetch(`/track?code=${code}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                result.innerHTML = `<strong>${data.error}</strong>`;
+                return;
+            }
+
+            result.innerHTML = `
+                <div class="card">
+                    <p><strong>الاسم:</strong> ${data.name}</p>
+                    <p><strong>الخدمة:</strong> ${data.service}</p>
+                    <p><strong>الحالة:</strong> ${data.status}</p>
+                    <p><strong>المرحلة الحالية:</strong> ${data.step}</p>
+                    <div class="progress">
+                        <div class="progress-bar" style="width:${getProgress(data.status)}%"></div>
+                    </div>
+                    <p><strong>ملاحظات:</strong> ${data.notes}</p>
+                    <p class="date"><strong>آخر تحديث:</strong> ${data.last_update}</p>
+                </div>
+            `;
+        })
+        .catch(() => { result.innerHTML = "حدث خطأ في الاتصال"; });
+}
+
+function getProgress(status){
+    const map = {
+        "مستلم": 20,
+        "قيد الإجراء": 40,
+        "تم التقديم": 60,
+        "بانتظار الرد": 80,
+        "مكتمل": 100
+    };
+    return map[status] || 30;
+}
+</script>
 </body>
 </html>
