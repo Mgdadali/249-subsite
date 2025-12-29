@@ -7,20 +7,13 @@
 </head>
 <body>
 <div class="container">
-    <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" class="logo">
-    <h1>متابعة سير الطلبات</h1>
-    <p>أدخل كود المتابعة:</p>
-    <input type="text" id="codeInput" placeholder="كود المتابعة">
-    <button onclick="trackHome()">متابعة الطلب</button>
+    <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249 Logo" class="logo">
+    <h1>متابعة الطلبات</h1>
+    <p>من فضلك أدخل كود المتابعة:</p>
+    <input type="text" id="code" placeholder="كود المتابعة">
+    <button onclick="track()">متابعة الطلب</button>
     <div id="result"></div>
 </div>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
-<script>
-function trackHome(){
-    const code = document.getElementById("codeInput").value.trim().toUpperCase();
-    if(!code){ alert("من فضلك أدخل كود المتابعة"); return; }
-    window.location.href = `/client/${code}`;
-}
-</script>
 </body>
 </html>
