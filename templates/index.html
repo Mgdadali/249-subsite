@@ -1,24 +1,42 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>249 | متابعة الطلب</title>
-    <link rel="stylesheet" href="static/style.css">
+  <meta charset="utf-8" />
+  <title>249 | متابعة الطلب</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-    <div class="container">
-        <!-- شعار الشركة -->
-        <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249 Logo" class="logo">
+<body class="page-home">
+  <main class="card-center">
+    <header class="brand">
+      <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249" class="logo-lg">
+      <h1>مرحباً في 249</h1>
+      <p class="lead">تابع طلبك بسهولة وأمان — أدخل كود المتابعة للحصول على حالة الطلب كاملة.</p>
+    </header>
 
-        <h1>مرحبا بك في 249</h1>
-        <p>تابع طلبك بسهولة باستخدام كود المتابعة الخاص بك</p>
-
-        <input type="text" id="code" placeholder="كود المتابعة">
-        <button onclick="track()">متابعة الطلب</button>
-
-        <div id="result"></div>
+    <div class="search-box">
+      <input id="codeInput" type="text" placeholder="أدخل كود المتابعة (مثال: 249-A9F3KQ7)" aria-label="كود المتابعة">
+      <button id="trackBtn">متابعة الطلب</button>
     </div>
 
-    <script src="static/script.js"></script>
+    <div id="home-result" class="home-result"></div>
+
+    <footer class="small-note">للموظفين: <a href="/admin">دخول الأدمن</a></footer>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script>
+    document.getElementById('trackBtn').addEventListener('click', () => {
+      const code = document.getElementById('codeInput').value.trim().toUpperCase();
+      if (!code) return alert('من فضلك أدخل كود المتابعة');
+      // انتقل للصفحة المخصصة للعميل
+      window.location.href = `/client/${encodeURIComponent(code)}`;
+    });
+
+    // دعم الضغط Enter
+    document.getElementById('codeInput').addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') document.getElementById('trackBtn').click();
+    });
+  </script>
 </body>
 </html>
