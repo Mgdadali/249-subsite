@@ -1,85 +1,127 @@
-/* الخطوط والألوان */
-body {
-    font-family: 'Tahoma', Arial, sans-serif;
-    background: linear-gradient(135deg, #0a3d62, #1e90ff);
-    margin: 0;
-    padding: 0;
-    direction: rtl;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    color: #fff;
+/* ========== Bahij TheSansArabic (ضع ملفات الخط في /static/fonts/) ==========
+ - ضع: /static/fonts/BahijTheSansArabic-Regular.woff2 و/bahij...woff
+============================================================================== */
+@font-face{
+  font-family:'Bahij';
+  src: url('/static/fonts/BahijTheSansArabic-Regular.woff2') format('woff2'),
+       url('/static/fonts/BahijTheSansArabic-Regular.woff') format('woff');
+  font-weight:400;
+  font-style:normal;
+  font-display:swap;
+}
+:root{
+  --blue-900: #0a3d62;
+  --blue-600: #1e90ff;
+  --bg: #f4f8fd;
+  --muted: #6c7a89;
+  --green: #28a745;
+  --card-bg: #ffffff;
+  --accent: linear-gradient(90deg,var(--blue-900),var(--blue-600));
 }
 
-.container {
-    background: #fff;
-    color: #0a3d62;
-    padding: 50px 40px;
-    border-radius: 15px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    text-align: center;
-    width: 400px;
-    animation: fadeIn 1s ease;
+/* Reset & base */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background: radial-gradient(1200px 400px at 10% 10%, rgba(30,144,255,0.08), transparent 8%),
+              linear-gradient(180deg,#eef6ff 0%, #f4f8fd 100%);
+  font-family: 'Bahij', Tahoma, Arial, sans-serif;
+  color:var(--blue-900);
+  direction:rtl;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 
-.logo {
-    max-width: 180px;
-    margin-bottom: 20px;
-    transition: transform 0.3s ease;
-}
-.logo:hover {
-    transform: scale(1.1);
-}
-
-h1 {
-    font-size: 28px;
-    margin-bottom: 10px;
+/* Center card for home */
+.card-center{
+  width:100%;
+  max-width:760px;
+  margin:48px auto;
+  padding:36px;
+  background:var(--card-bg);
+  border-radius:14px;
+  box-shadow:0 20px 50px rgba(12,38,81,0.06);
+  text-align:center;
 }
 
-p {
-    margin-bottom: 25px;
-    font-size: 16px;
-    color: #34495e;
+/* Brand */
+.logo-lg{max-width:180px;margin:6px auto 12px; display:block}
+.brand h1{margin:6px 0;font-size:28px}
+.lead{color:var(--muted);margin-bottom:18px}
+
+/* Search box */
+.search-box{display:flex;gap:12px;align-items:center;justify-content:center; margin:12px 0 8px}
+.search-box input{
+  flex:1; padding:14px 16px; border-radius:10px; border:1px solid #e6eef9; font-size:16px;
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+  transition:box-shadow .18s, transform .12s;
+}
+.search-box input:focus{outline:none; box-shadow:0 6px 30px rgba(30,144,255,0.08)}
+#trackBtn,#trackBtnAlt{background:var(--accent); color:#fff; border:none; padding:12px 18px; border-radius:10px; font-weight:600; cursor:pointer;}
+#trackBtn:hover{transform:translateY(-3px); box-shadow:0 12px 30px rgba(30,144,255,0.12)}
+
+/* Home small result */
+.home-result{margin-top:16px;color:var(--muted)}
+
+/* container for checklist page */
+.container{
+  max-width:900px;
+  margin:42px auto;
+  padding:28px;
+  background:var(--card-bg);
+  border-radius:12px;
+  box-shadow:0 18px 40px rgba(12,38,81,0.06);
 }
 
-input {
-    width: 100%;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-}
-input:focus {
-    border-color: #1e90ff;
-    outline: none;
-}
+/* Client header */
+.client-header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+.logo-sm{max-width:84px;border-radius:8px}
+.client-info h2{margin:0;font-size:20px}
+.client-info .muted{color:var(--muted);margin-top:6px}
 
-button {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(90deg,#0a3d62,#1e90ff);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* Progress area */
+.progress-section{display:flex;gap:20px;align-items:center;margin:18px 0}
+.progress-left{width:120px;display:flex;align-items:center;justify-content:center}
+.progress-circle{
+  width:96px;height:96px;border-radius:999px;background:linear-gradient(180deg,#f7fbff,#eef7ff);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(10,61,98,0.06);
+  font-weight:700;color:var(--blue-900); font-size:18px;
 }
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
-}
+.progress-right{flex:1}
+.progress-bar-outer{height:14px;background:#eef5fd;border-radius:999px;overflow:hidden}
+.progress-bar-inner{height:100%;width:0;background:var(--blue-600);transition:width .6s ease, background-color .4s ease}
+.progress-text{color:var(--muted);margin-top:8px}
 
-#result {
-    margin-top: 25px;
-    text-align: right;
+/* Checklist list */
+.checklist-list{list-style:none;padding:0;margin:18px 0 30px}
+.checklist-list li{
+  display:flex;justify-content:space-between;align-items:center;padding:14px;border-radius:10px;
+  background: linear-gradient(180deg,#fbfdff,#f6fbff);border-left:6px solid var(--blue-900);
+  margin-bottom:10px;box-shadow:0 6px 18px rgba(10,61,98,0.03);
+  transition:transform .15s ease, background .18s ease;
 }
+.checklist-list li.done{
+  border-left-color:var(--green);
+  background: linear-gradient(180deg,#f7fff7,#ecfff0);
+  color:rgba(10,61,98,0.9); text-decoration:line-through;
+}
+.checklist-list li .step-left{display:flex;gap:12px;align-items:center}
+.step-badge{
+  min-width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#fff,#f3f9ff);box-shadow:inset 0 -2px 0 rgba(10,61,98,0.03);
+  font-weight:700;color:var(--blue-900)
+}
+.checklist-list li.done .step-badge{background:linear-gradient(180deg,#eafcf0,#d9f5df); color:var(--green)}
 
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
+/* smaller */
+.muted{color:var(--muted);font-size:14px}
+.back-link{display:inline-block;color:var(--muted);text-decoration:none;margin-bottom:8px}
+.notes-section{margin-top:6px;color:var(--muted)}
+
+@media (max-width:720px){
+  .progress-section{flex-direction:column;align-items:flex-start}
+  .progress-left{width:100%}
+  .card-center{margin:18px;padding:20px}
+  .container{margin:14px;padding:18px}
 }
