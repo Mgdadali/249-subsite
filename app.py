@@ -29,9 +29,23 @@ def admin_required():
 # ================== Home Page ==================
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("index.html")  # واجهة رئيسية ثابتة
 
-# ================== Client Tracking ==================
+# ================== Client Checklist Page ==================
+@app.route("/client/<code>")
+def client_page(code):
+    code = code.strip().upper()
+    clients = clients_sheet.get_all_records()
+    client_data = None
+    for row in clients:
+        if str(row["TrackingCode"]).strip().upper() == code:
+            client_data = row
+            break
+    if not client_data:
+        return "كود المتابعة غير صحيح ❌", 404
+    return render_template("checklist.html", code=code, client_name=client_data["Name"], service=client_data["Service"])
+
+# ================== Client Tracking API ==================
 @app.route("/track")
 def track():
     code = request.args.get("code", "").strip().upper()
@@ -44,7 +58,6 @@ def track():
         if str(row["TrackingCode"]).strip().upper() == code:
             client_data = row
             break
-
     if not client_data:
         return jsonify({"error": "كود المتابعة غير صحيح"}), 404
 
