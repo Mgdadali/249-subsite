@@ -1,35 +1,58 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>249 | سير الطلب</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="utf-8" />
+  <title>249 | حالة الطلب</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-<div class="container">
-    <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" class="logo">
-    <h1>تفاصيل الطلب</h1>
-    <p id="clientName"></p>
-    <p id="service"></p>
-    <ul class="checklist" id="checklist"></ul>
-</div>
-<script src="{{ url_for('static', filename='script.js') }}"></script>
-<script>
-const code = "{{ code }}";
-fetch(`/track?code=${code}`)
-.then(res=>res.json())
-.then(data=>{
-    if(data.error){ document.getElementById("clientName").innerHTML=data.error; return; }
-    document.getElementById("clientName").innerHTML = `الاسم: ${data.name}`;
-    document.getElementById("service").innerHTML = `الخدمة: ${data.service}`;
-    const ul = document.getElementById("checklist");
-    data.checklist.forEach(step=>{
-        const li = document.createElement("li");
-        li.textContent = step.name;
-        if(step.done) li.classList.add("done");
-        ul.appendChild(li);
+<body class="page-checklist">
+  <div class="container">
+    <a class="back-link" href="/"><span>◀</span> الرجوع</a>
+
+    <header class="client-header">
+      <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249" class="logo-sm">
+      <div class="client-info">
+        <h2 id="clientName">جاري التحميل...</h2>
+        <p id="clientService" class="muted"></p>
+      </div>
+    </header>
+
+    <section class="progress-section">
+      <div class="progress-left">
+        <div class="progress-circle" id="progressCircle"><span id="progressPct">0%</span></div>
+      </div>
+      <div class="progress-right">
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <p id="progressText" class="muted">جاري حساب نسبة الإنجاز...</p>
+      </div>
+    </section>
+
+    <section class="checklist-section">
+      <h3>مراحل الطلب</h3>
+      <ul id="checklistList" class="checklist-list"></ul>
+    </section>
+
+    <section class="notes-section">
+      <p id="notes" class="muted"></p>
+    </section>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script>
+    // الكود المرسل من route
+    const TRACK_CODE = "{{ code }}";
+
+    // عندما تحمل الصفحة، ارسم الـ checklist
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!TRACK_CODE) {
+        document.getElementById('clientName').innerText = 'لا يوجد كود متاح';
+        return;
+      }
+      renderClientChecklist(TRACK_CODE);
     });
-});
-</script>
+  </script>
 </body>
 </html>
