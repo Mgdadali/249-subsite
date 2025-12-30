@@ -15,13 +15,11 @@
     </header>
 
     <div class="search-box">
-      <input id="codeInput" type="text" placeholder="أدخل كود المتابعة (مثال: 249-A9F3KQ7)" aria-label="كود المتابعة">
+      <input id="codeInput" type="text" placeholder="أدخل كود المتابعة">
       <button id="trackBtn">متابعة الطلب</button>
     </div>
 
     <div id="home-result" class="home-result"></div>
-
-    <footer class="small-note">للموظفين: <a href="/admin">دخول الأدمن</a></footer>
   </main>
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
@@ -33,7 +31,6 @@
       window.location.href = `/client/${encodeURIComponent(code)}`;
     });
 
-    // دعم الضغط Enter
     document.getElementById('codeInput').addEventListener('keydown', (e)=>{
       if (e.key === 'Enter') document.getElementById('trackBtn').click();
     });
