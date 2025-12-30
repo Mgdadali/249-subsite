@@ -104,7 +104,7 @@ body{
 .checklist-list li.done{
   border-left-color:var(--green);
   background: linear-gradient(180deg,#f7fff7,#ecfff0);
-  color:rgba(10,61,98,0.9); text-decoration:line-through;
+  color:rgba(10,61,98,0.9); text-decoration:none;
 }
 .checklist-list li .step-left{display:flex;gap:12px;align-items:center}
 .step-badge{
