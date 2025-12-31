@@ -223,7 +223,7 @@ def manage_steps():
     if not admin_required():
         return redirect("/admin")
     # render management UI (we rely on admin_clients.html which contains client management)
-    return render_template("admin_clients.html")
+    return render_template("admin_manage.html")
 
 # ================== Admin Logout ==================
 @app.route("/admin/logout")
