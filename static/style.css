@@ -292,3 +292,66 @@ body{
   border:1px solid #ddd;
   margin-bottom:10px;
 }
+
+## في الاسفل يوجد استايل مربع اضافة عميل جديد 
+
+
+/* ===== Admin Add Client Form ===== */
+.admin-form-card{
+  background:#fff;
+  padding:28px;
+  border-radius:14px;
+  box-shadow:0 18px 40px rgba(12,38,81,0.08);
+}
+
+.admin-form-card h2{
+  margin-bottom:6px;
+}
+
+.admin-form-card .muted{
+  margin-bottom:22px;
+}
+
+.form-group{
+  margin-bottom:18px;
+}
+
+.form-group label{
+  display:block;
+  margin-bottom:6px;
+  font-weight:600;
+  font-size:14px;
+}
+
+.form-group input{
+  width:100%;
+  padding:14px;
+  border-radius:10px;
+  border:1px solid #e0e7f1;
+  font-size:15px;
+  transition:border-color .2s, box-shadow .2s;
+}
+
+.form-group input:focus{
+  outline:none;
+  border-color:#1e90ff;
+  box-shadow:0 0 0 3px rgba(30,144,255,.12);
+}
+
+.btn-primary{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(90deg,#1e90ff,#ff8c00);
+  color:#fff;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  transition:transform .2s, box-shadow .2s;
+}
+
+.btn-primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 30px rgba(255,140,0,.25);
+}
