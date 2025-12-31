@@ -35,7 +35,6 @@
       100% { background-position: 200% 0; }
     }
 
-    /* ====== Optional: progress circle ====== */
     .progress-circle {
       width: 80px;
       height: 80px;
@@ -87,10 +86,8 @@
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
   <script>
-    // الكود المرسل من route
     const TRACK_CODE = "{{ code }}";
 
-    // عندما تحمل الصفحة، ارسم الـ checklist
     window.addEventListener('DOMContentLoaded', () => {
       if (!TRACK_CODE) {
         document.getElementById('clientName').innerText = 'لا يوجد كود متاح';
@@ -99,13 +96,82 @@
       renderClientChecklist(TRACK_CODE);
     });
 
-    // ================== تحديث شريط التقدم ==================
+    // ====== تحديث شريط التقدم مع حركة لمعة ======
     function updateProgressBar(pct) {
       const bar = document.getElementById('progressBar');
       const pctText = document.getElementById('progressPct');
       bar.style.width = pct + '%';
       pctText.innerText = pct + '%';
+      
+      // لو 100% خلي اللون أخضر ثابت، وإلا خلي لمعة
+      if (pct === 100) {
+        bar.style.background = 'linear-gradient(90deg,#28a745,#1db954)';
+        bar.style.animation = 'none';
+      } else {
+        bar.style.background = 'linear-gradient(270deg, #1e88e5, #42a5f5, #1e88e5)';
+        bar.style.animation = 'progressShine 2s linear infinite';
+      }
     }
+
+    async function renderClientChecklist(code){
+      const nameEl = document.getElementById('clientName');
+      const serviceEl = document.getElementById('clientService');
+      const listEl = document.getElementById('checklistList');
+      const pctEl = document.getElementById('progressPct');
+      const barEl = document.getElementById('progressBar');
+      const textEl = document.getElementById('progressText');
+      const notesEl = document.getElementById('notes');
+
+      nameEl.textContent = 'جاري التحميل...';
+      serviceEl.textContent = '';
+      listEl.innerHTML = '';
+      notesEl.textContent = '';
+
+      try {
+        const res = await fetch(`/track?code=${encodeURIComponent(code)}`);
+        const data = await res.json();
+        if(data.error){
+          nameEl.textContent = data.error;
+          return;
+        }
+
+        nameEl.textContent = data.name || 'عميل';
+        serviceEl.textContent = data.service ? `الخدمة: ${data.service}` : '';
+
+        const steps = data.checklist || [];
+        let completed = 0;
+        listEl.innerHTML = '';
+        steps.forEach((s, idx) => {
+          const li = document.createElement('li');
+          li.className = s.done ? 'done' : '';
+          li.innerHTML = `
+            <div class="step-left">
+              <div class="step-badge">${idx+1}</div>
+              <div class="step-text"><strong>${s.name}</strong><div class="muted"></div></div>
+            </div>
+            <div class="step-right">${s.done ? '✅' : '⏳'}</div>
+          `;
+          listEl.appendChild(li);
+          if (s.done) completed++;
+        });
+
+        const percent = steps.length ? Math.round((completed / steps.length) * 100) : 0;
+        updateProgressBar(percent);
+
+        textEl.textContent = `تم إتمام ${completed} من ${steps.length} مرحلة (${percent}%)`;
+
+        if (data.last_update) notesEl.textContent = `آخر تحديث: ${data.last_update}`;
+        if (data.notes) {
+          notesEl.textContent += (notesEl.textContent ? ' — ' : '') + `ملاحظة: ${data.notes}`;
+        }
+
+      } catch (err) {
+        nameEl.textContent = 'حدث خطأ في الاتصال بالخادم';
+        console.error(err);
+      }
+    }
+
+    window.renderClientChecklist = renderClientChecklist;
   </script>
 </body>
 </html>
