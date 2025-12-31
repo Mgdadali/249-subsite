@@ -1,87 +1,130 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8"/>
-  <title>إدارة العملاء - 249</title>
+  <meta charset="UTF-8">
+  <title>إدارة العملاء</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
 <div class="container" style="max-width:1000px">
+  <h2>📋 إدارة العملاء والمراحل</h2>
 
-  <header style="display:flex;justify-content:space-between;align-items:center">
-    <h2>📋 إدارة العملاء والمراحل</h2>
-    <a href="/admin/dashboard" class="back-link">← الرجوع</a>
-  </header>
+  <!-- Select Client -->
+  <div class="select-box">
+    <div class="select-display" onclick="toggleDropdown()">اختر عميل</div>
 
-  <div class="admin-layout">
-
-    <!-- Sidebar -->
-    <aside class="admin-sidebar">
-      <button class="btn-primary" onclick="location.href='/admin/add-client'">
-        ➕ إضافة عميل جديد
-      </button>
-    </aside>
-
-    <!-- Main -->
-    <main class="admin-main">
-
-      <!-- Select Client -->
-      <div class="select-box">
-        <div class="select-display" onclick="toggleDropdown()">
-          اختر عميل
-        </div>
-
-        <div class="select-dropdown" id="clientDropdown">
-          <input type="text" placeholder="بحث عن عميل..." onkeyup="filterClients(this.value)">
-          <div id="clientList">
-            <!-- مثال – سيتم ربطه لاحقًا -->
-            <div class="client-option" onclick="selectClient('249001')">Ahmed Mohamed</div>
-            <div class="client-option" onclick="selectClient('249002')">Sara Ali</div>
-            <div class="client-option" onclick="selectClient('249003')">Mohamed Hassan</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Client Steps -->
-      <div id="clientSteps" class="steps-card" style="display:none">
-        <h3>مراحل الطلب</h3>
-
-        <div class="step-row">
-          <span>استلام الملف</span>
-          <button class="admin-action">✔</button>
-        </div>
-
-        <div class="step-row">
-          <span>مراجعة الأوراق</span>
-          <button class="admin-action danger">✖</button>
-        </div>
-
-      </div>
-
-    </main>
-
+    <div class="select-dropdown" id="clientDropdown">
+      <input type="text" placeholder="بحث..." onkeyup="filterClients(this.value)">
+      <div id="clientList"></div>
+    </div>
   </div>
 
+  <!-- Checklist -->
+  <div id="stepsCard" class="steps-card" style="display:none">
+    <h3 id="clientTitle"></h3>
+    <div id="stepsList"></div>
+  </div>
 </div>
 
 <script>
+let clientsCache = {};
+let currentCode = null;
+
+/* ================= Load Clients ================= */
+fetch("/admin/api/clients")
+  .then(r => r.json())
+  .then(data => {
+    let list = document.getElementById("clientList");
+    list.innerHTML = "";
+    data.forEach(c => {
+      clientsCache[c.code] = c;
+      let div = document.createElement("div");
+      div.className = "client-option";
+      div.innerText = `${c.name} (${c.code})`;
+      div.onclick = () => selectClient(c.code);
+      list.appendChild(div);
+    });
+  });
+
+/* ================= Dropdown ================= */
 function toggleDropdown(){
   document.getElementById("clientDropdown").classList.toggle("show");
 }
 
 function filterClients(val){
-  let items = document.querySelectorAll(".client-option");
-  items.forEach(i=>{
-    i.style.display = i.innerText.toLowerCase().includes(val.toLowerCase())
+  document.querySelectorAll(".client-option").forEach(el=>{
+    el.style.display = el.innerText.toLowerCase().includes(val.toLowerCase())
       ? "block" : "none";
   });
 }
 
+/* ================= Select Client ================= */
 function selectClient(code){
-  document.querySelector(".select-display").innerText = "العميل: " + code;
+  currentCode = code;
+  document.querySelector(".select-display").innerText =
+    clientsCache[code].name + " — " + clientsCache[code].service;
+
   document.getElementById("clientDropdown").classList.remove("show");
-  document.getElementById("clientSteps").style.display = "block";
+  loadChecklist(code);
+}
+
+/* ================= Load Checklist ================= */
+function loadChecklist(code){
+  fetch(`/admin/api/client/${code}/checklist`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById("stepsCard").style.display = "block";
+      document.getElementById("clientTitle").innerText =
+        "مراحل العميل (" + code + ")";
+
+      let box = document.getElementById("stepsList");
+      box.innerHTML = "";
+
+      if(data.steps.length === 0){
+        box.innerHTML = "<p>لا توجد مراحل بعد</p>";
+        return;
+      }
+
+      data.steps.forEach(s=>{
+        let row = document.createElement("div");
+        row.className = "step-row";
+
+        row.innerHTML = `
+          <span>${s.name}</span>
+          <div>
+            <button class="admin-action ${s.done?'done':''}"
+              onclick="toggleStep('${s.name}')">
+              ${s.done?'✔':'○'}
+            </button>
+            <button class="admin-action danger"
+              onclick="deleteStep('${s.name}')">
+              ✖
+            </button>
+          </div>
+        `;
+        box.appendChild(row);
+      });
+    });
+}
+
+/* ================= Toggle Step ================= */
+function toggleStep(step){
+  fetch(`/admin/api/client/${currentCode}/toggle-step`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({step})
+  }).then(()=>loadChecklist(currentCode));
+}
+
+/* ================= Delete Step ================= */
+function deleteStep(step){
+  if(!confirm("حذف المرحلة؟")) return;
+  fetch(`/admin/api/client/${currentCode}/delete-step`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({step})
+  }).then(()=>loadChecklist(currentCode));
 }
 </script>
 
