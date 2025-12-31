@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <title>إدارة العملاء - 249</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container" style="max-width:1000px;margin-top:30px">
+    <a href="/admin/dashboard" class="back-link">◀ رجوع</a>
+    <h2>إدارة العملاء</h2>
+
+    <div style="display:flex;gap:18px;margin-top:14px">
+      <!-- العمود الأيسر: زر/قائمة العملاء -->
+      <div style="flex:0 0 260px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+          <button onclick="openAddClient()" class="admin-small-btn">➕ إضافة عميل جديد</button>
+          <button onclick="loadClients()" class="admin-small-btn">🔄 تحديث القائمة</button>
+        </div>
+
+        <div id="clientsList" style="background:#fff;padding:12px;border-radius:10px;min-height:320px;box-shadow:0 8px 20px rgba(0,0,0,0.04)">
+          <!-- قائمة العملاء تُملأ ديناميكياً -->
+          تحميل قائمة العملاء...
+        </div>
+      </div>
+
+      <!-- العمود الأيمن: تفاصيل العميل -->
+      <div style="flex:1">
+        <div id="clientPanel" style="background:#fff;padding:16px;border-radius:10px;min-height:320px;box-shadow:0 8px 20px rgba(0,0,0,0.04)">
+          <p class="muted">اختر عميل من العمود الأيسر لعرض مراحله</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>
