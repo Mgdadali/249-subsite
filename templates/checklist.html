@@ -5,6 +5,78 @@
   <title>249 | حالة الطلب</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    /* ====== Shine Animation ====== */
+    @keyframes shine {
+      0% { box-shadow: 0 0 5px #1e88e5; }
+      50% { box-shadow: 0 0 15px #42a5f5; }
+      100% { box-shadow: 0 0 5px #1e88e5; }
+    }
+
+    @keyframes moveUpDown {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-2px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .step-btn.done {
+      background: #1e88e5;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      animation: shine 1.5s infinite alternate, moveUpDown 2s infinite alternate;
+    }
+
+    .step-btn.pending {
+      background: #fff;
+      color: #666;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: default;
+    }
+
+    .step-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .progress-bar-outer {
+      background: #eee;
+      border-radius: 12px;
+      width: 100%;
+      height: 18px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1e88e5, #42a5f5);
+      border-radius: 12px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #eee;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 18px;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body class="page-checklist">
   <div class="container">
@@ -42,31 +114,48 @@
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
   <script>
-    /* ====== Animation for shine effect ====== */
-@keyframes shine {
-  0% { box-shadow: 0 0 5px #1e88e5; }
-  50% { box-shadow: 0 0 15px #42a5f5; }
-  100% { box-shadow: 0 0 5px #1e88e5; }
-}
-
-@keyframes moveUpDown {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-2px); }
-  100% { transform: translateY(0px); }
-}
-
-/* تعديل زر المرحلة المكتملة */
-.step-row button.done {
-  background: #1e88e5;
-  color: #fff;
-  border-color: #1e88e5;
-  animation: shine 1.5s infinite alternate, moveUpDown 2s infinite alternate;
-}
-
-    // الكود المرسل من route
     const TRACK_CODE = "{{ code }}";
 
-    // عندما تحمل الصفحة، ارسم الـ checklist
+    async function renderClientChecklist(code){
+      const res = await fetch(`/track?code=${code}`);
+      if(!res.ok) {
+        document.getElementById('clientName').innerText = "حدث خطأ أثناء تحميل البيانات";
+        return;
+      }
+
+      const data = await res.json();
+
+      document.getElementById('clientName').innerText = data.name;
+      document.getElementById('clientService').innerText = data.service;
+
+      const checklist = document.getElementById('checklistList');
+      checklist.innerHTML = "";
+
+      let completed = 0;
+
+      data.checklist.forEach(step=>{
+        let li = document.createElement('li');
+        li.className = "step-row";
+
+        let doneClass = step.done === true ? 'done' : 'pending';
+        if(step.done === true) completed++;
+
+        li.innerHTML = `
+          <span>${step.name}</span>
+          <button class="step-btn ${doneClass}">
+            ${step.done === true ? '✔' : '○'}
+          </button>
+        `;
+        checklist.appendChild(li);
+      });
+
+      // تحديث progress bar
+      let pct = Math.round((completed / data.checklist.length) * 100);
+      document.getElementById('progressPct').innerText = pct + "%";
+      document.getElementById('progressBar').style.width = pct + "%";
+      document.getElementById('progressText').innerText = `تم إنجاز ${completed} من ${data.checklist.length} مرحلة`;
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       if (!TRACK_CODE) {
         document.getElementById('clientName').innerText = 'لا يوجد كود متاح';
