@@ -80,9 +80,10 @@ def track():
     for s in checklist_sheet.get_all_records():
         if s.get("TrackingCode","").strip().upper() == code:
             steps.append({
-                "name": s.get("StepName",""),
-                "done": bool(s.get("Done"))
-            })
+    "name": s.get("StepName",""),
+    "done": str(s.get("Done","")).strip().upper() == "TRUE"
+})
+
 
     return jsonify({
         "name": client_data.get("Name",""),
@@ -134,12 +135,12 @@ def admin_all_steps(code):
     code = code.strip().upper()
 
     all_steps = [r["StepName"] for r in steps_sheet.get_all_records()]
-
     client_steps = {
-        r["StepName"]: bool(r["Done"])
-        for r in checklist_sheet.get_all_records()
-        if r["TrackingCode"].strip().upper() == code
-    }
+    r["StepName"]: str(r.get("Done","")).strip().upper() == "TRUE"
+    for r in checklist_sheet.get_all_records()
+    if r.get("TrackingCode","").strip().upper() == code
+}
+
 
     return jsonify([
         {"name": s, "done": client_steps.get(s, False)}
