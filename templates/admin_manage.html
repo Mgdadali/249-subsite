@@ -5,7 +5,7 @@
   <title>إدارة العملاء والمراحل</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    /* ========== Admin Manage Custom Styles ========== */
+    /* ======================= Admin Manage ======================= */
     .admin-manage-container {
       max-width:1100px;
       margin:40px auto;
@@ -26,24 +26,15 @@
       flex-direction:column;
       gap:12px;
     }
-    .sidebar h3 {
-      margin-top:0;
-      font-size:18px;
-      margin-bottom:12px;
-    }
-    .select-box {
-      position: relative;
-      cursor:pointer;
-    }
+    .sidebar h3 { margin-top:0; font-size:18px; margin-bottom:12px; }
+    .select-box { position: relative; cursor:pointer; }
     .select-display {
       background:rgba(255,255,255,0.15);
       padding:12px;
       border-radius:10px;
       transition:0.2s;
     }
-    .select-display:hover {
-      background:rgba(255,165,0,0.3);
-    }
+    .select-display:hover { background:rgba(255,165,0,0.3); }
     .select-dropdown {
       position: absolute;
       top:50px;
@@ -75,7 +66,7 @@
     }
     .client-option:hover { background: #f0f8ff; color:#1e90ff; }
 
-    /* Add Client Button in sidebar */
+    /* Add Client Button */
     .add-client-btn {
       background: linear-gradient(90deg,#ff8c00,#ffa500);
       border:none;
@@ -96,11 +87,9 @@
       padding:20px;
       border-radius:12px;
       box-shadow:0 8px 25px rgba(0,0,0,0.08);
+      position:relative;
     }
-    .steps-card h3 {
-      margin-top:0;
-      color:#0a3d62;
-    }
+    .steps-card h3 { margin-top:0; color:#0a3d62; display:inline-block; margin-right:10px; }
     .step-row {
       display:flex;
       justify-content:space-between;
@@ -113,23 +102,22 @@
       transition:0.2s;
     }
     .step-row:hover { background: linear-gradient(180deg,#fff4e6,#fffbe6); }
+    .admin-action { border:none; border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:600; margin-left:6px; }
+    .admin-action.done { background:#28a745; color:white; }
+    .admin-action.danger { background:#e64a19; color:white; }
 
-    .admin-action {
+    /* Add Step Button */
+    .add-step-btn {
+      background: linear-gradient(90deg,#1e90ff,#0a3d62);
       border:none;
-      border-radius:8px;
-      padding:6px 10px;
-      cursor:pointer;
+      color:white;
       font-weight:600;
-      margin-left:6px;
+      padding:6px 12px;
+      border-radius:8px;
+      cursor:pointer;
+      margin-bottom:12px;
     }
-    .admin-action.done {
-      background:#28a745;
-      color:white;
-    }
-    .admin-action.danger {
-      background:#e64a19;
-      color:white;
-    }
+    .add-step-btn:hover { transform:translateY(-1px); box-shadow:0 3px 8px rgba(0,0,0,0.15); }
 
     /* Modal */
     .modal {
@@ -149,30 +137,21 @@
       width:360px;
       box-shadow:0 8px 25px rgba(0,0,0,0.2);
       text-align:right;
+      position:relative;
     }
     .modal-content h3 { margin-top:0; color:#1e90ff; }
-    .modal-content input {
-      width:100%;
-      padding:10px;
-      margin-bottom:12px;
-      border-radius:8px;
-      border:1px solid #ddd;
-    }
-    .modal-content button {
-      width:100%;
-      padding:12px;
-      border:none;
-      border-radius:10px;
-      background: linear-gradient(90deg,#1e90ff,#0a3d62);
-      color:white;
-      font-weight:600;
+    .modal-content input { width:100%; padding:10px; margin-bottom:12px; border-radius:8px; border:1px solid #ddd; }
+    .modal-content button { width:100%; padding:12px; border:none; border-radius:10px; background: linear-gradient(90deg,#1e90ff,#0a3d62); color:white; font-weight:600; cursor:pointer; }
+    .modal-content button:hover { transform:translateY(-2px); }
+    .modal-close {
+      position:absolute; top:10px; left:12px;
+      font-size:20px;
+      color:#e64a19;
       cursor:pointer;
     }
-    .modal-content button:hover { transform:translateY(-2px); }
   </style>
 </head>
 <body>
-
 <div class="container admin-manage-container">
 
   <!-- Sidebar -->
@@ -189,10 +168,10 @@
   </div>
 
   <!-- Main Content -->
-  <span style="position:absolute; top:10px; left:12px; cursor:pointer; font-size:20px; color:#e64a19;" onclick="closeAddClientModal()">✖</span>
   <div class="main-content">
     <div id="stepsCard" class="steps-card" style="display:none">
       <h3 id="clientTitle"></h3>
+      <button class="add-step-btn" onclick="addStep()">➕ إضافة مرحلة</button>
       <div id="stepsList"></div>
     </div>
   </div>
@@ -201,6 +180,7 @@
 <!-- Add Client Modal -->
 <div class="modal" id="addClientModal">
   <div class="modal-content">
+    <span class="modal-close" onclick="closeAddClientModal()">✖</span>
     <h3>إضافة عميل جديد</h3>
     <input type="text" id="newClientName" placeholder="اسم العميل">
     <input type="text" id="newClientService" placeholder="نوع الخدمة">
@@ -257,17 +237,13 @@ function loadChecklist(code){
     .then(r => r.json())
     .then(data => {
       document.getElementById("stepsCard").style.display = "block";
-      document.getElementById("clientTitle").innerText =
-        "مراحل العميل (" + code + ")";
-
+      document.getElementById("clientTitle").innerText = "مراحل العميل (" + code + ")";
       let box = document.getElementById("stepsList");
       box.innerHTML = "";
-
       if(data.steps.length === 0){
         box.innerHTML = "<p>لا توجد مراحل بعد</p>";
         return;
       }
-
       data.steps.forEach(s=>{
         let row = document.createElement("div");
         row.className = "step-row";
@@ -284,11 +260,6 @@ function loadChecklist(code){
       });
     });
 }
-
-  function closeAddClientModal(){
-  document.getElementById("addClientModal").classList.remove("show");
-}
-
 
 /* ================= Toggle Step ================= */
 function toggleStep(step){
@@ -310,14 +281,12 @@ function deleteStep(step){
 }
 
 /* ================= Add Client Modal ================= */
-function openAddClientModal(){
-  document.getElementById("addClientModal").classList.add("show");
-}
+function openAddClientModal(){ document.getElementById("addClientModal").classList.add("show"); }
+function closeAddClientModal(){ document.getElementById("addClientModal").classList.remove("show"); }
 function addClient(){
   let name = document.getElementById("newClientName").value;
   let service = document.getElementById("newClientService").value;
   if(!name){ alert("الرجاء إدخال اسم العميل"); return; }
-
   fetch("/admin/api/add-client",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
@@ -325,12 +294,23 @@ function addClient(){
   }).then(r=>r.json()).then(res=>{
     if(res.ok){
       alert(`تم إضافة العميل ✅ كود: ${res.code}`);
-      document.getElementById("addClientModal").classList.remove("show");
+      closeAddClientModal();
       document.getElementById("newClientName").value = "";
       document.getElementById("newClientService").value = "";
       loadClients();
     }
   });
+}
+
+/* ================= Add Step ================= */
+function addStep(){
+  let stepName = prompt("أدخل اسم المرحلة الجديدة:");
+  if(!stepName) return;
+  fetch(`/admin/api/add-step`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ code: currentCode, step: stepName })
+  }).then(()=>loadChecklist(currentCode));
 }
 </script>
 </body>
