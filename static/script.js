@@ -2,6 +2,44 @@
 // دوال: renderClientChecklist(code) و trackHome() متاحة
 
 // توجيه من الصفحة الرئيسية للصفحة المخصصة
+function renderClientChecklist(code) {
+    fetch(`/track?code=${code}`)
+    .then(r=>r.json())
+    .then(data=>{
+        document.getElementById('clientName').innerText = data.name;
+        document.getElementById('clientService').innerText = data.service;
+
+        const checklist = data.checklist;
+        const checklistList = document.getElementById('checklistList');
+        checklistList.innerHTML = "";
+
+        let doneCount = 0;
+
+        checklist.forEach(item=>{
+            let li = document.createElement('li');
+            let status = '';
+            if(item.done === true) {
+                status = '✔ مكتملة';
+                doneCount++;
+            } else if(item.done === false) {
+                status = '○ لم تبدأ';
+            } else {
+                status = '⏳ قيد الانتظار';
+            }
+            li.innerText = `${item.name} — ${status}`;
+            checklistList.appendChild(li);
+        });
+
+        // ====== تحديث شريط التقدم ======
+        const pct = Math.round((doneCount / checklist.length) * 100);
+        const bar = document.getElementById('progressBar');
+        const pctText = document.getElementById('progressPct');
+
+        bar.style.width = pct + '%';
+        pctText.innerText = pct + '%';
+    });
+}
+
 function trackHome() {
   const input = document.getElementById('codeInput');
   if(!input) return;
