@@ -393,3 +393,23 @@ body{
 }
 .admin-action.done{background:#22c55e;color:#fff}
 .admin-action.danger{background:#ef4444;color:#fff}
+
+
+
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  z-index:100;
+}
+
+.modal-content{
+  background:#fff;
+  max-width:400px;
+  margin:100px auto;
+  padding:20px;
+  border-radius:12px;
+}
+
