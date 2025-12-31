@@ -1,212 +1,318 @@
-import os, json, secrets
-import gspread
-from flask import Flask, request, jsonify, session, redirect, render_template
-from oauth2client.service_account import ServiceAccountCredentials
-from flask_cors import CORS
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Manage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-# ================== App Setup ==================
-app = Flask(__name__)
-CORS(app)
-app.secret_key = os.getenv("SECRET_KEY", "249-secret-key")
-
-# ================== Google Sheets ==================
-scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]
-google_creds_json = os.getenv("GOOGLE_CREDENTIALS")
-if not google_creds_json:
-    raise Exception("GOOGLE_CREDENTIALS environment variable not set")
-
-creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(google_creds_json), scope)
-client = gspread.authorize(creds)
-spreadsheet = client.open("249 – Customer Tracking")
-
-clients_sheet   = spreadsheet.worksheet("Clients")
-checklist_sheet = spreadsheet.worksheet("Checklist")
-admins_sheet    = spreadsheet.worksheet("Admins")
-steps_sheet     = spreadsheet.worksheet("Steps")  # ⭐ جديد
-
-# ================== Helpers ==================
-def admin_required():
-    return "admin" in session
-
-def _find_checklist_row(code, step_name):
-    values = checklist_sheet.get_all_values()
-    if not values:
-        return None
-
-    for idx, row in enumerate(values[1:], start=2):
-        done  = row[0] if len(row) > 0 else ""
-        step  = row[1] if len(row) > 1 else ""
-        track = row[2] if len(row) > 2 else ""
-
-        if track.strip().upper() == code and step.strip() == step_name.strip():
-            return idx, done
-    return None
-
-# ================== Home ==================
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-# ================== Client Page ==================
-@app.route("/client/<code>")
-def client_page(code):
-    code = code.strip().upper()
-    for row in clients_sheet.get_all_records():
-        if str(row.get("TrackingCode","")).strip().upper() == code:
-            return render_template(
-                "checklist.html",
-                code=code,
-                client_name=row.get("Name",""),
-                service=row.get("Service","")
-            )
-    return "كود المتابعة غير صحيح ❌", 404
-
-# ================== Client Tracking API ==================
-@app.route("/track")
-def track():
-    code = request.args.get("code","").strip().upper()
-    if not code:
-        return jsonify({"error":"missing code"}), 400
-
-    client_data = None
-    for r in clients_sheet.get_all_records():
-        if str(r.get("TrackingCode","")).strip().upper() == code:
-            client_data = r
-            break
-    if not client_data:
-        return jsonify({"error":"invalid code"}), 404
-
-    steps = []
-    for s in checklist_sheet.get_all_records():
-        if s.get("TrackingCode","").strip().upper() == code:
-            steps.append({
-                "name": s.get("StepName",""),
-                "done": bool(s.get("Done"))
-            })
-
-    return jsonify({
-        "name": client_data.get("Name",""),
-        "service": client_data.get("Service",""),
-        "checklist": steps
-    })
-
-# ================== Admin Login ==================
-@app.route("/admin", methods=["GET","POST"])
-def admin_login():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        for admin in admins_sheet.get_all_records():
-            if admin.get("Username")==username and str(admin.get("Password"))==password:
-                session["admin"] = username
-                return redirect("/admin/dashboard")
-        return render_template("admin_login.html", error="بيانات غير صحيحة")
-    return render_template("admin_login.html")
-
-# ================== Admin Dashboard ==================
-@app.route("/admin/dashboard")
-def admin_dashboard():
-    if not admin_required():
-        return redirect("/admin")
-    return render_template("admin_dashboard.html")
-
-# ================== Admin API: Clients ==================
-@app.route("/admin/api/clients")
-def admin_clients():
-    if not admin_required():
-        return jsonify({"error":"unauth"}), 403
-
-    return jsonify([
-        {
-            "code": r.get("TrackingCode",""),
-            "name": r.get("Name",""),
-            "service": r.get("Service","")
-        }
-        for r in clients_sheet.get_all_records()
-    ])
-
-# ================== Admin API: ALL Steps (⭐ الأهم) ==================
-@app.route("/admin/api/client/<code>/all-steps")
-def admin_all_steps(code):
-    if not admin_required():
-        return jsonify({"error":"unauth"}), 403
-
-    code = code.strip().upper()
-
-    all_steps = [r["StepName"] for r in steps_sheet.get_all_records()]
-
-    client_steps = {
-        r["StepName"]: bool(r["Done"])
-        for r in checklist_sheet.get_all_records()
-        if r["TrackingCode"].strip().upper() == code
+  <!-- ====== STYLE ====== -->
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f4f6f9;
+      color: #333;
     }
 
-    return jsonify([
-        {"name": s, "done": client_steps.get(s, False)}
-        for s in all_steps
-    ])
+    /* ====== Header ====== */
+    header {
+      background: linear-gradient(90deg, #1e88e5, #fb8c00);
+      color: #fff;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-# ================== Admin API: SAVE Steps (زر حفظ) ==================
-@app.route("/admin/api/client/<code>/save-steps", methods=["POST"])
-def save_steps(code):
-    if not admin_required():
-        return jsonify({"error":"unauth"}), 403
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+    }
 
-    code = code.strip().upper()
-    steps = request.json.get("steps", {})
+    header a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+    }
 
-    for step_name, done in steps.items():
-        found = _find_checklist_row(code, step_name)
-        if found:
-            row_num, _ = found
-            checklist_sheet.update_cell(row_num, 1, "TRUE" if done else "FALSE")
-        else:
-            if done:
-                checklist_sheet.append_row(["TRUE", step_name, code])
+    /* ====== Layout ====== */
+    .container {
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
 
-    return jsonify({"ok": True})
+    /* ====== Dropdown ====== */
+    .select-box {
+      position: relative;
+      max-width: 400px;
+      margin-bottom: 20px;
+    }
 
-# ================== Admin API: Add Step (عام) ==================
-@app.route("/admin/api/add-step", methods=["POST"])
-def admin_add_step():
-    if not admin_required():
-        return jsonify({"error":"unauth"}), 403
+    .select-display {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
 
-    step = (request.json or {}).get("step","").strip()
-    if not step:
-        return jsonify({"error":"missing step"}), 400
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: 0;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-top: 5px;
+      z-index: 10;
+      max-height: 260px;
+      overflow-y: auto;
+    }
 
-    steps_sheet.append_row([step])
-    return jsonify({"ok": True})
+    .dropdown.show {
+      display: block;
+    }
 
-# ================== Admin API: Add Client ==================
-@app.route("/admin/api/add-client", methods=["POST"])
-def admin_add_client():
-    if not admin_required():
-        return jsonify({"error":"unauth"}), 403
+    .dropdown input {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-bottom: 1px solid #eee;
+      outline: none;
+    }
 
-    name = request.json.get("name","")
-    service = request.json.get("service","")
-    if not name:
-        return jsonify({"error":"missing name"}), 400
+    .client-option {
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f1f1;
+    }
 
-    code = secrets.token_hex(4).upper()
-    clients_sheet.append_row([code, name, service])
-    return jsonify({"ok":True, "code":code})
+    .client-option:hover {
+      background: #f0f7ff;
+    }
 
-# ================== Admin Manage ==================
-@app.route("/admin/manage")
-def admin_manage():
-    if not admin_required():
-        return redirect("/admin")
-    return render_template("admin_manage.html")
+    /* ====== Card ====== */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin-top: 20px;
+    }
 
-# ================== Logout ==================
-@app.route("/admin/logout")
-def logout():
-    session.clear()
-    return redirect("/admin")
+    .card h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
 
-# ================== Run ==================
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+    /* ====== Steps ====== */
+    .step-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .step-row:last-child {
+      border-bottom: none;
+    }
+
+    .admin-action {
+      border: 1px solid #ccc;
+      background: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .admin-action.done {
+      background: #1e88e5;
+      color: #fff;
+      border-color: #1e88e5;
+    }
+
+    /* ====== Buttons ====== */
+    .actions {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .add-step-btn,
+    .save-btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .add-step-btn {
+      background: #fb8c00;
+      color: #fff;
+    }
+
+    .save-btn {
+      background: #1e88e5;
+      color: #fff;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>لوحة التحكم – إدارة العملاء</h1>
+  <a href="/admin/logout">تسجيل خروج</a>
+</header>
+
+<div class="container">
+
+  <!-- ====== Client Select ====== -->
+  <div class="select-box">
+    <div class="select-display" onclick="toggleDropdown()">
+      اختر عميل
+    </div>
+
+    <div class="dropdown" id="clientDropdown">
+      <input type="text" placeholder="بحث..." onkeyup="filterClients(this.value)">
+      <div id="clientList"></div>
+    </div>
+  </div>
+
+  <!-- ====== Steps Card ====== -->
+  <div class="card" id="stepsCard" style="display:none;">
+    <h2 id="clientTitle"></h2>
+
+    <div id="stepsList"></div>
+
+    <div class="actions">
+      <button class="add-step-btn" onclick="addStep()">➕ إضافة مرحلة</button>
+      <button class="save-btn" onclick="saveChanges()">💾 حفظ التغييرات</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ====== SCRIPT ====== -->
+<script>
+let clientsCache = {};
+let currentCode = null;
+let pending = {};
+let lastSteps = [];
+
+/* ---------- Dropdown ---------- */
+function toggleDropdown(){
+  document.getElementById("clientDropdown").classList.toggle("show");
+}
+
+/* ---------- Load Clients ---------- */
+fetch("/admin/api/clients")
+.then(r=>r.json())
+.then(data=>{
+  let list = document.getElementById("clientList");
+  list.innerHTML = "";
+  data.forEach(c=>{
+    clientsCache[c.code] = c;
+    let d = document.createElement("div");
+    d.className = "client-option";
+    d.innerText = `${c.name} (${c.code})`;
+    d.onclick = ()=>selectClient(c.code);
+    list.appendChild(d);
+  });
+});
+
+function filterClients(q){
+  q = q.toLowerCase();
+  document.querySelectorAll(".client-option").forEach(el=>{
+    el.style.display = el.innerText.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+
+/* ---------- Select Client ---------- */
+function selectClient(code){
+  currentCode = code;
+  pending = {};
+  document.querySelector(".select-display").innerText =
+    clientsCache[code].name + " — " + clientsCache[code].service;
+  document.getElementById("clientDropdown").classList.remove("show");
+  loadChecklist(code);
+}
+
+/* ---------- Load All Steps ---------- */
+function loadChecklist(code){
+  fetch(`/admin/api/client/${code}/all-steps`)
+  .then(r=>r.json())
+  .then(steps=>{
+    lastSteps = steps;
+    document.getElementById("stepsCard").style.display = "block";
+    document.getElementById("clientTitle").innerText =
+      "مراحل العميل ("+code+")";
+
+    let box = document.getElementById("stepsList");
+    box.innerHTML = "";
+
+    steps.forEach(s=>{
+      let current = (s.name in pending) ? pending[s.name] : s.done;
+
+      let row = document.createElement("div");
+      row.className = "step-row";
+      row.innerHTML = `
+        <span>${s.name}</span>
+        <button class="admin-action ${current?'done':''}"
+          onclick="toggleLocal('${s.name}', ${current})">
+          ${current?'✔':'○'}
+        </button>
+      `;
+      box.appendChild(row);
+    });
+  });
+}
+
+/* ---------- Toggle (Local Only) ---------- */
+function toggleLocal(step, current){
+  pending[step] = !current;
+  loadChecklist(currentCode);
+}
+
+/* ---------- Save ---------- */
+function saveChanges(){
+  fetch(`/admin/api/client/${currentCode}/save-steps`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({steps: pending})
+  })
+  .then(r=>r.json())
+  .then(()=>{
+    pending = {};
+    loadChecklist(currentCode);
+    alert("تم حفظ التغييرات بنجاح ✅");
+  });
+}
+
+/* ---------- Add Step (Global) ---------- */
+function addStep(){
+  let step = prompt("اسم المرحلة الجديدة:");
+  if(!step) return;
+
+  fetch("/admin/api/add-step",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({step: step})
+  })
+  .then(()=>loadChecklist(currentCode));
+}
+</script>
+
+</body>
+</html>
+
