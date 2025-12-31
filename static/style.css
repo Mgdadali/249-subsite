@@ -140,3 +140,46 @@ body{
 .admin-action{background:#1e90ff;color:#fff;padding:6px 8px;border-radius:8px;border:none;cursor:pointer}
 .admin-action.danger{background:#e64a19}
 #adminModal input{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px}
+
+
+
+
+
+
+.admin-login-card{
+  max-width:420px;
+  margin:80px auto;
+  padding:32px;
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 20px 45px rgba(0,0,0,.08);
+  text-align:center;
+}
+
+.admin-login-card h2{
+  margin-bottom:22px;
+}
+
+.admin-login-card input{
+  width:100%;
+  padding:14px;
+  margin-bottom:14px;
+  border-radius:10px;
+  border:1px solid #e0e0e0;
+  font-size:15px;
+}
+
+.admin-login-card button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(90deg,#1e90ff,#0a3d62);
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.admin-login-card button:hover{
+  transform:translateY(-2px);
+}
