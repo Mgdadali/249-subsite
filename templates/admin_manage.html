@@ -2,46 +2,207 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>إدارة العملاء</title>
+  <title>إدارة العملاء والمراحل</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* ========== Admin Manage Custom Styles ========== */
+    .admin-manage-container {
+      max-width:1100px;
+      margin:40px auto;
+      display:flex;
+      gap:20px;
+      font-family: 'Bahij', Tahoma, Arial, sans-serif;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width:260px;
+      background: linear-gradient(180deg,#1e90ff,#0a3d62);
+      padding:20px;
+      border-radius:12px;
+      color:white;
+      box-shadow:0 8px 25px rgba(0,0,0,0.1);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .sidebar h3 {
+      margin-top:0;
+      font-size:18px;
+      margin-bottom:12px;
+    }
+    .select-box {
+      position: relative;
+      cursor:pointer;
+    }
+    .select-display {
+      background:rgba(255,255,255,0.15);
+      padding:12px;
+      border-radius:10px;
+      transition:0.2s;
+    }
+    .select-display:hover {
+      background:rgba(255,165,0,0.3);
+    }
+    .select-dropdown {
+      position: absolute;
+      top:50px;
+      right:0;
+      left:0;
+      background:white;
+      border-radius:10px;
+      max-height:300px;
+      overflow-y:auto;
+      box-shadow:0 8px 20px rgba(0,0,0,0.2);
+      display:none;
+      flex-direction:column;
+      z-index:99;
+    }
+    .select-dropdown.show { display:flex; }
+    .select-dropdown input {
+      padding:10px;
+      border:none;
+      border-bottom:1px solid #ddd;
+      border-radius:10px 10px 0 0;
+      outline:none;
+    }
+    .client-option {
+      padding:10px;
+      cursor:pointer;
+      border-bottom:1px solid #f0f0f0;
+      transition:0.2s;
+    }
+    .client-option:hover { background: #f0f8ff; color:#1e90ff; }
+
+    /* Add Client Button in sidebar */
+    .add-client-btn {
+      background: linear-gradient(90deg,#ff8c00,#ffa500);
+      border:none;
+      padding:10px;
+      border-radius:10px;
+      color:white;
+      font-weight:600;
+      cursor:pointer;
+      transition:0.2s;
+      margin-top:10px;
+    }
+    .add-client-btn:hover { transform:translateY(-2px); box-shadow:0 6px 15px rgba(0,0,0,0.2); }
+
+    /* Main Content */
+    .main-content {
+      flex:1;
+      background:#fff;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 8px 25px rgba(0,0,0,0.08);
+    }
+    .steps-card h3 {
+      margin-top:0;
+      color:#0a3d62;
+    }
+    .step-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px;
+      margin-bottom:10px;
+      border-radius:8px;
+      background: linear-gradient(180deg,#f6faff,#eef7ff);
+      box-shadow:0 3px 10px rgba(0,0,0,0.05);
+      transition:0.2s;
+    }
+    .step-row:hover { background: linear-gradient(180deg,#fff4e6,#fffbe6); }
+
+    .admin-action {
+      border:none;
+      border-radius:8px;
+      padding:6px 10px;
+      cursor:pointer;
+      font-weight:600;
+      margin-left:6px;
+    }
+    .admin-action.done {
+      background:#28a745;
+      color:white;
+    }
+    .admin-action.danger {
+      background:#e64a19;
+      color:white;
+    }
+
+    /* Modal */
+    .modal {
+      display:none;
+      position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,0.5);
+      justify-content:center;
+      align-items:center;
+      z-index:999;
+    }
+    .modal.show { display:flex; }
+    .modal-content {
+      background:#fff;
+      padding:20px;
+      border-radius:12px;
+      width:360px;
+      box-shadow:0 8px 25px rgba(0,0,0,0.2);
+      text-align:right;
+    }
+    .modal-content h3 { margin-top:0; color:#1e90ff; }
+    .modal-content input {
+      width:100%;
+      padding:10px;
+      margin-bottom:12px;
+      border-radius:8px;
+      border:1px solid #ddd;
+    }
+    .modal-content button {
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      background: linear-gradient(90deg,#1e90ff,#0a3d62);
+      color:white;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .modal-content button:hover { transform:translateY(-2px); }
+  </style>
 </head>
 <body>
 
-<div class="admin-layout">
+<div class="container admin-manage-container">
 
   <!-- Sidebar -->
-  <aside class="admin-sidebar">
-    <h4>العملاء</h4>
-
-    <!-- Searchable Dropdown -->
-    <div class="dropdown">
-      <input type="text" id="clientSearch" placeholder="ابحث عن عميل">
-      <div id="clientList" class="dropdown-list"></div>
+  <div class="sidebar">
+    <h3>اختر العميل</h3>
+    <div class="select-box">
+      <div class="select-display" onclick="toggleDropdown()">اختر عميل</div>
+      <div class="select-dropdown" id="clientDropdown">
+        <input type="text" placeholder="بحث..." onkeyup="filterClients(this.value)">
+        <div id="clientList"></div>
+      </div>
     </div>
-
-    <button class="admin-small-btn" onclick="openAddClientModal()">
-      ➕ إضافة عميل جديد
-    </button>
-  </aside>
+    <button class="add-client-btn" onclick="openAddClientModal()">➕ إضافة عميل جديد</button>
+  </div>
 
   <!-- Main Content -->
-  <main class="admin-main">
-    <h3 id="selectedClientTitle">اختر عميل لعرض المراحل</h3>
-    <div id="stepsList"></div>
-  </main>
-
+  <div class="main-content">
+    <div id="stepsCard" class="steps-card" style="display:none">
+      <h3 id="clientTitle"></h3>
+      <div id="stepsList"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Add Client Modal -->
-<div id="addClientModal" class="modal">
+<div class="modal" id="addClientModal">
   <div class="modal-content">
     <h3>إضافة عميل جديد</h3>
-
-    <input id="newClientName" placeholder="اسم العميل">
-    <input id="newClientService" placeholder="نوع الخدمة">
-
-    <button onclick="submitClient()">إضافة</button>
-    <button class="danger" onclick="closeAddClientModal()">إغلاق</button>
+    <input type="text" id="newClientName" placeholder="اسم العميل">
+    <input type="text" id="newClientService" placeholder="نوع الخدمة">
+    <button onclick="addClient()">إضافة</button>
   </div>
 </div>
 
@@ -66,24 +227,25 @@ function loadClients(){
       });
     });
 }
-
-/* Initial load */
 loadClients();
 
-/* ================= Dropdown Filter ================= */
-document.getElementById("clientSearch").addEventListener("input", e => {
-  let val = e.target.value.toLowerCase();
+/* ================= Dropdown ================= */
+function toggleDropdown(){
+  document.getElementById("clientDropdown").classList.toggle("show");
+}
+function filterClients(val){
   document.querySelectorAll(".client-option").forEach(el=>{
-    el.style.display = el.innerText.toLowerCase().includes(val) ? "block" : "none";
+    el.style.display = el.innerText.toLowerCase().includes(val.toLowerCase())
+      ? "block" : "none";
   });
-});
+}
 
 /* ================= Select Client ================= */
 function selectClient(code){
   currentCode = code;
-  document.getElementById("selectedClientTitle").innerText =
+  document.querySelector(".select-display").innerText =
     clientsCache[code].name + " — " + clientsCache[code].service;
-
+  document.getElementById("clientDropdown").classList.remove("show");
   loadChecklist(code);
 }
 
@@ -92,6 +254,10 @@ function loadChecklist(code){
   fetch(`/admin/api/client/${code}/checklist`)
     .then(r => r.json())
     .then(data => {
+      document.getElementById("stepsCard").style.display = "block";
+      document.getElementById("clientTitle").innerText =
+        "مراحل العميل (" + code + ")";
+
       let box = document.getElementById("stepsList");
       box.innerHTML = "";
 
@@ -103,18 +269,13 @@ function loadChecklist(code){
       data.steps.forEach(s=>{
         let row = document.createElement("div");
         row.className = "step-row";
-
         row.innerHTML = `
           <span>${s.name}</span>
           <div>
-            <button class="admin-action ${s.done?'done':''}"
-              onclick="toggleStep('${s.name}')">
+            <button class="admin-action ${s.done?'done':''}" onclick="toggleStep('${s.name}')">
               ${s.done?'✔':'○'}
             </button>
-            <button class="admin-action danger"
-              onclick="deleteStep('${s.name}')">
-              ✖
-            </button>
+            <button class="admin-action danger" onclick="deleteStep('${s.name}')">✖</button>
           </div>
         `;
         box.appendChild(row);
@@ -141,32 +302,29 @@ function deleteStep(step){
   }).then(()=>loadChecklist(currentCode));
 }
 
-/* ================= Modal Add Client ================= */
+/* ================= Add Client Modal ================= */
 function openAddClientModal(){
-  document.getElementById("addClientModal").style.display="block";
+  document.getElementById("addClientModal").classList.add("show");
 }
-
-function closeAddClientModal(){
-  document.getElementById("addClientModal").style.display="none";
-}
-
-function submitClient(){
+function addClient(){
   let name = document.getElementById("newClientName").value;
   let service = document.getElementById("newClientService").value;
-  if(!name) return alert("الرجاء إدخال اسم العميل");
+  if(!name){ alert("الرجاء إدخال اسم العميل"); return; }
 
   fetch("/admin/api/add-client",{
     method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({name,service})
-  }).then(r=>r.json())
-    .then(data=>{
-      closeAddClientModal();
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({name, service})
+  }).then(r=>r.json()).then(res=>{
+    if(res.ok){
+      alert(`تم إضافة العميل ✅ كود: ${res.code}`);
+      document.getElementById("addClientModal").classList.remove("show");
+      document.getElementById("newClientName").value = "";
+      document.getElementById("newClientService").value = "";
       loadClients();
-      alert(`تم إضافة العميل ✅ كود: ${data.code}`);
-    });
+    }
+  });
 }
 </script>
-
 </body>
 </html>
