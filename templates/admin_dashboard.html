@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
   <div class="container" style="max-width:900px;margin-top:40px">
     <header style="display:flex;justify-content:space-between;align-items:center">
       <h2>لوحة تحكم الأدمن</h2>
@@ -13,26 +14,32 @@
     </header>
 
     <div style="display:flex;gap:18px;margin-top:20px">
-      <!-- مربع اختيار -->
-      <div style="flex:0 0 240px;">
+
+      <!-- خيارات -->
+      <div style="flex:0 0 260px;">
         <div class="admin-card" onclick="location.href='/admin/add-client'">
           <h3>➕ إضافة عميل جديد</h3>
-          <p class="muted">أضف عميل جديد بسرعة واحصل على كود المتابعة</p>
+          <p class="muted">إضافة عميل والحصول على كود متابعة</p>
         </div>
 
         <div class="admin-card" onclick="location.href='/admin/manage'">
           <h3>📋 إدارة العملاء</h3>
-          <p class="muted">عرض العملاء، تعديل مراحلهم أو تغيير حالة المراحل</p>
+          <p class="muted">التحكم في مراحل العملاء</p>
         </div>
       </div>
 
+      <!-- محتوى جانبي -->
       <div style="flex:1">
         <div style="background:#fff;padding:16px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,0.04)">
           <h3>نظرة سريعة</h3>
-          <p class="muted">استخدم لوحة إدارة العملاء للتحكم في المراحل وإدارة الحالات.</p>
+          <p class="muted">
+            استخدم إدارة العملاء للتحكم في المراحل، التقدم، وحالة كل طلب.
+          </p>
         </div>
       </div>
+
     </div>
   </div>
+
 </body>
 </html>
