@@ -5,21 +5,38 @@
   <title>دخول الأدمن - 249</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="admin-login-page">
 
-  <div class="container admin-login-card">
-    <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" class="logo-lg" alt="249">
-    <h2>تسجيل دخول الأدمن</h2>
+  <div class="admin-login-wrapper">
+    <div class="admin-login-card">
 
-    {% if error %}
-      <p style="color:#c00">{{ error }}</p>
-    {% endif %}
+      <div class="admin-login-header">
+        <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249">
+        <h2>تسجيل دخول الأدمن</h2>
+        <p>الرجاء إدخال بيانات الدخول للمتابعة</p>
+      </div>
 
-    <form method="post" action="/admin">
-      <input name="username" placeholder="اسم المستخدم" required>
-      <input name="password" type="password" placeholder="كلمة المرور" required>
-      <button type="submit">دخول</button>
-    </form>
+      {% if error %}
+        <div class="admin-login-error">{{ error }}</div>
+      {% endif %}
+
+      <form method="post" action="/admin">
+        <div class="input-group">
+          <input name="username" required>
+          <label>اسم المستخدم</label>
+        </div>
+
+        <div class="input-group">
+          <input type="password" name="password" required>
+          <label>كلمة المرور</label>
+        </div>
+
+        <button type="submit" class="admin-login-btn">
+          دخول
+        </button>
+      </form>
+
+    </div>
   </div>
 
 </body>
