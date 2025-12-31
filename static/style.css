@@ -266,6 +266,7 @@ body{
 
 .admin-card:hover h3{
   color:#ff8c00;
+  cursor: pointer
 }
 
 /* Dropdown clients */
