@@ -126,6 +126,8 @@ body{
   .container{margin:14px;padding:18px}
 }
 
+
+
 /* ========== Advanced Admin Login ========== */
 
 .admin-login-page{
@@ -244,4 +246,48 @@ body{
   font-size:14px;
   margin-bottom:14px;
   text-align:center;
+}
+
+
+##تحت اضافة دايناميكية عندما تقف بمؤشر الماوس على خيارات لوحة التحكم
+
+
+/* ========== Admin Dashboard Enhancements ========== */
+
+.admin-card{
+  transition:all .25s ease;
+}
+
+.admin-card:hover{
+  background:#fff7ed;
+  box-shadow:0 18px 40px rgba(255,140,0,.25);
+  transform:translateY(-6px);
+}
+
+.admin-card:hover h3{
+  color:#ff8c00;
+}
+
+/* Dropdown clients */
+.clients-dropdown{
+  display:none;
+  margin-top:10px;
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
+  max-height:260px;
+  overflow-y:auto;
+}
+
+.client-item:hover{
+  background:#f4f8fd;
+}
+
+/* Search input */
+.client-search{
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  margin-bottom:10px;
 }
