@@ -2,44 +2,88 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <title>لوحة الأدمن - 249</title>
+  <title>إدارة العملاء - 249</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-  <div class="container" style="max-width:900px;margin-top:40px">
-    <header style="display:flex;justify-content:space-between;align-items:center">
-      <h2>لوحة تحكم الأدمن</h2>
-      <div><a href="/admin/logout">تسجيل خروج</a></div>
-    </header>
+<div class="container" style="max-width:1000px">
 
-    <div style="display:flex;gap:18px;margin-top:20px">
+  <header style="display:flex;justify-content:space-between;align-items:center">
+    <h2>📋 إدارة العملاء والمراحل</h2>
+    <a href="/admin/dashboard" class="back-link">← الرجوع</a>
+  </header>
 
-      <!-- خيارات -->
-      <div style="flex:0 0 260px;">
-        <div class="admin-card" onclick="location.href='/admin/add-client'">
-          <h3>➕ إضافة عميل جديد</h3>
-          <p class="muted">إضافة عميل والحصول على كود متابعة</p>
+  <div class="admin-layout">
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <button class="btn-primary" onclick="location.href='/admin/add-client'">
+        ➕ إضافة عميل جديد
+      </button>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+
+      <!-- Select Client -->
+      <div class="select-box">
+        <div class="select-display" onclick="toggleDropdown()">
+          اختر عميل
         </div>
 
-        <div class="admin-card" onclick="location.href='/admin/manage'">
-          <h3>📋 إدارة العملاء</h3>
-          <p class="muted">التحكم في مراحل العملاء</p>
+        <div class="select-dropdown" id="clientDropdown">
+          <input type="text" placeholder="بحث عن عميل..." onkeyup="filterClients(this.value)">
+          <div id="clientList">
+            <!-- مثال – سيتم ربطه لاحقًا -->
+            <div class="client-option" onclick="selectClient('249001')">Ahmed Mohamed</div>
+            <div class="client-option" onclick="selectClient('249002')">Sara Ali</div>
+            <div class="client-option" onclick="selectClient('249003')">Mohamed Hassan</div>
+          </div>
         </div>
       </div>
 
-      <!-- محتوى جانبي -->
-      <div style="flex:1">
-        <div style="background:#fff;padding:16px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,0.04)">
-          <h3>نظرة سريعة</h3>
-          <p class="muted">
-            استخدم إدارة العملاء للتحكم في المراحل، التقدم، وحالة كل طلب.
-          </p>
+      <!-- Client Steps -->
+      <div id="clientSteps" class="steps-card" style="display:none">
+        <h3>مراحل الطلب</h3>
+
+        <div class="step-row">
+          <span>استلام الملف</span>
+          <button class="admin-action">✔</button>
         </div>
+
+        <div class="step-row">
+          <span>مراجعة الأوراق</span>
+          <button class="admin-action danger">✖</button>
+        </div>
+
       </div>
 
-    </div>
+    </main>
+
   </div>
+
+</div>
+
+<script>
+function toggleDropdown(){
+  document.getElementById("clientDropdown").classList.toggle("show");
+}
+
+function filterClients(val){
+  let items = document.querySelectorAll(".client-option");
+  items.forEach(i=>{
+    i.style.display = i.innerText.toLowerCase().includes(val.toLowerCase())
+      ? "block" : "none";
+  });
+}
+
+function selectClient(code){
+  document.querySelector(".select-display").innerText = "العميل: " + code;
+  document.getElementById("clientDropdown").classList.remove("show");
+  document.getElementById("clientSteps").style.display = "block";
+}
+</script>
 
 </body>
 </html>
