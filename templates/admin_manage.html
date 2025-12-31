@@ -71,6 +71,7 @@
       cursor:pointer;
       border-bottom:1px solid #f0f0f0;
       transition:0.2s;
+      color: #0a3d62;
     }
     .client-option:hover { background: #f0f8ff; color:#1e90ff; }
 
@@ -188,6 +189,7 @@
   </div>
 
   <!-- Main Content -->
+  <span style="position:absolute; top:10px; left:12px; cursor:pointer; font-size:20px; color:#e64a19;" onclick="closeAddClientModal()">✖</span>
   <div class="main-content">
     <div id="stepsCard" class="steps-card" style="display:none">
       <h3 id="clientTitle"></h3>
@@ -282,6 +284,11 @@ function loadChecklist(code){
       });
     });
 }
+
+  function closeAddClientModal(){
+  document.getElementById("addClientModal").classList.remove("show");
+}
+
 
 /* ================= Toggle Step ================= */
 function toggleStep(step){
