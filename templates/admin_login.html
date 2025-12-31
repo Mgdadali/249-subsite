@@ -6,15 +6,21 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="container" style="max-width:420px;margin-top:60px;text-align:center">
+
+  <div class="container admin-login-card">
     <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" class="logo-lg" alt="249">
     <h2>تسجيل دخول الأدمن</h2>
-    {% if error %}<p style="color:#c00">{{ error }}</p>{% endif %}
+
+    {% if error %}
+      <p style="color:#c00">{{ error }}</p>
+    {% endif %}
+
     <form method="post" action="/admin">
       <input name="username" placeholder="اسم المستخدم" required>
       <input name="password" type="password" placeholder="كلمة المرور" required>
       <button type="submit">دخول</button>
     </form>
   </div>
+
 </body>
 </html>
