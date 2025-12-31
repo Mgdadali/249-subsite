@@ -26,24 +26,51 @@ admins_sheet    = spreadsheet.worksheet("Admins")
 def admin_required():
     return "admin" in session
 
+def _sheet_header_map(sheet):
+    """Return dict mapping header name -> 1-based col index."""
+    header = sheet.row_values(1)
+    return {h: i+1 for i, h in enumerate(header)}
+
+# find checklist row matching code + stepName, return row number and current Done value (string)
+def _find_checklist_row(code, step_name):
+    values = checklist_sheet.get_all_values()
+    if not values:
+        return None
+    header = values[0]
+    try:
+        code_i = header.index("TrackingCode")
+        step_i = header.index("StepName")
+        done_i = header.index("Done")
+    except ValueError:
+        return None
+    for idx, row in enumerate(values[1:], start=2):
+        # safe access
+        rc = row[code_i] if len(row) > code_i else ""
+        rs = row[step_i] if len(row) > step_i else ""
+        rd = row[done_i] if len(row) > done_i else ""
+        if str(rc).strip().upper() == code and str(rs).strip() == str(step_name).strip():
+            return idx, rd
+    return None
+
 # ================== Home Page ==================
 @app.route("/")
 def home():
-    return render_template("index.html")  # واجهة رئيسية ثابتة
+    return render_template("index.html")  # home static page
 
-# ================== Client Checklist Page ==================
+# ================== Client page route ==================
 @app.route("/client/<code>")
 def client_page(code):
     code = code.strip().upper()
     clients = clients_sheet.get_all_records()
     client_data = None
     for row in clients:
-        if str(row["TrackingCode"]).strip().upper() == code:
+        if str(row.get("TrackingCode","")).strip().upper() == code:
             client_data = row
             break
     if not client_data:
         return "كود المتابعة غير صحيح ❌", 404
-    return render_template("checklist.html", code=code, client_name=client_data["Name"], service=client_data["Service"])
+    # render checklist page (client-side will fetch /track for checklist JSON)
+    return render_template("checklist.html", code=code, client_name=client_data.get("Name",""), service=client_data.get("Service",""))
 
 # ================== Client Tracking API ==================
 @app.route("/track")
@@ -55,7 +82,7 @@ def track():
     clients = clients_sheet.get_all_records()
     client_data = None
     for row in clients:
-        if str(row["TrackingCode"]).strip().upper() == code:
+        if str(row.get("TrackingCode","")).strip().upper() == code:
             client_data = row
             break
     if not client_data:
@@ -64,16 +91,16 @@ def track():
     steps = []
     checklist = checklist_sheet.get_all_records()
     for step in checklist:
-        if str(step["TrackingCode"]).strip().upper() == code:
-            steps.append({"name": step["StepName"], "done": bool(step["Done"])})
+        if str(step.get("TrackingCode","")).strip().upper() == code:
+            steps.append({"name": step.get("StepName",""), "done": bool(step.get("Done", False))})
 
     return jsonify({
-        "name": client_data["Name"],
-        "service": client_data["Service"],
+        "name": client_data.get("Name",""),
+        "service": client_data.get("Service",""),
         "checklist": steps
     })
 
-# ================== Admin Login ==================
+# ================== Admin Login (render) ==================
 @app.route("/admin", methods=["GET","POST"])
 def admin_login():
     if request.method == "POST":
@@ -81,20 +108,103 @@ def admin_login():
         password = request.form.get("password")
         admins = admins_sheet.get_all_records()
         for admin in admins:
-            if admin["Username"] == username and str(admin["Password"]) == password:
+            if admin.get("Username") == username and str(admin.get("Password")) == password:
                 session["admin"] = username
                 return redirect("/admin/dashboard")
-        return "بيانات الدخول غير صحيحة ❌"
+        return render_template("admin_login.html", error="بيانات الدخول غير صحيحة")
     return render_template("admin_login.html")
 
-# ================== Admin Dashboard ==================
+# ================== Admin Dashboard (render) ==================
 @app.route("/admin/dashboard")
 def admin_dashboard():
     if not admin_required():
         return redirect("/admin")
     return render_template("admin_dashboard.html")
 
-# ================== Add Client ==================
+# ================== Admin API: list clients ==================
+@app.route("/admin/api/clients")
+def admin_api_clients():
+    if not admin_required():
+        return jsonify({"error":"unauth"}), 403
+    clients = clients_sheet.get_all_records()
+    # return minimal info
+    out = [{"code": str(r.get("TrackingCode","")), "name": r.get("Name",""), "service": r.get("Service","")} for r in clients]
+    return jsonify(out)
+
+# ================== Admin API: get client checklist ==================
+@app.route("/admin/api/client/<code>/checklist")
+def admin_api_client_checklist(code):
+    if not admin_required():
+        return jsonify({"error":"unauth"}), 403
+    code = code.strip().upper()
+    checklist = checklist_sheet.get_all_records()
+    steps = []
+    for s in checklist:
+        if str(s.get("TrackingCode","")).strip().upper() == code:
+            steps.append({"name": s.get("StepName",""), "done": bool(s.get("Done", False))})
+    return jsonify({"code": code, "steps": steps})
+
+# ================== Admin API: toggle step done (POST) ==================
+@app.route("/admin/api/client/<code>/toggle-step", methods=["POST"])
+def admin_api_toggle_step(code):
+    if not admin_required():
+        return jsonify({"error":"unauth"}), 403
+    payload = request.json or {}
+    step_name = payload.get("step")
+    if not step_name:
+        return jsonify({"error":"missing step"}), 400
+    code = code.strip().upper()
+    found = _find_checklist_row(code, step_name)
+    if not found:
+        return jsonify({"error":"step not found"}), 404
+    row_num, current_done = found
+    # determine new value
+    new_val = "FALSE"
+    cur = str(current_done).strip().upper()
+    if cur in ["TRUE","1","TRUE "]:
+        new_val = "FALSE"
+    else:
+        new_val = "TRUE"
+    # find 'Done' column index
+    header_map = _sheet_header_map(checklist_sheet)
+    done_col = header_map.get("Done")
+    if not done_col:
+        return jsonify({"error":"sheet header missing Done"}), 500
+    checklist_sheet.update_cell(row_num, done_col, new_val)
+    return jsonify({"ok": True, "new": new_val})
+
+# ================== Admin API: delete step (POST) ==================
+@app.route("/admin/api/client/<code>/delete-step", methods=["POST"])
+def admin_api_delete_step(code):
+    if not admin_required():
+        return jsonify({"error":"unauth"}), 403
+    payload = request.json or {}
+    step_name = payload.get("step")
+    if not step_name:
+        return jsonify({"error":"missing step"}), 400
+    code = code.strip().upper()
+    found = _find_checklist_row(code, step_name)
+    if not found:
+        return jsonify({"error":"step not found"}), 404
+    row_num, _ = found
+    checklist_sheet.delete_row(row_num)
+    return jsonify({"ok": True})
+
+# ================== Admin API: add client (POST) - AJAX friendly ==================
+@app.route("/admin/api/add-client", methods=["POST"])
+def admin_api_add_client():
+    if not admin_required():
+        return jsonify({"error":"unauth"}), 403
+    payload = request.json or {}
+    name = payload.get("name") or ""
+    service = payload.get("service") or ""
+    if not name:
+        return jsonify({"error":"missing name"}), 400
+    tracking_code = secrets.token_hex(4).upper()
+    clients_sheet.append_row([tracking_code, name, service])
+    return jsonify({"ok": True, "code": tracking_code, "name": name, "service": service})
+
+# ================== Add client page (render) - fallback for form POST too ==================
 @app.route("/admin/add-client", methods=["GET","POST"])
 def add_client():
     if not admin_required():
@@ -104,20 +214,16 @@ def add_client():
         service = request.form.get("service")
         tracking_code = secrets.token_hex(4).upper()
         clients_sheet.append_row([tracking_code, name, service])
-        return f"<p>تم إضافة العميل بنجاح ✅</p><p>كود المتابعة: <b>{tracking_code}</b></p><a href='/admin/dashboard'>رجوع</a>"
+        return render_template("admin_add.html", message=f"تم إضافة العميل ✅ كود: {tracking_code}")
     return render_template("admin_add.html")
 
-# ================== Manage Checklist ==================
-@app.route("/admin/manage", methods=["GET","POST"])
+# ================== Manage Checklist (render fallback) ==================
+@app.route("/admin/manage", methods=["GET"])
 def manage_steps():
     if not admin_required():
         return redirect("/admin")
-    if request.method == "POST":
-        code = request.form.get("code").strip().upper()
-        step = request.form.get("step")
-        checklist_sheet.append_row([code, step, False])
-        return "تمت إضافة المرحلة ✅ <br><a href='/admin/manage'>رجوع</a>"
-    return render_template("admin_manage.html")
+    # render management UI (we rely on admin_clients.html which contains client management)
+    return render_template("admin_clients.html")
 
 # ================== Admin Logout ==================
 @app.route("/admin/logout")
