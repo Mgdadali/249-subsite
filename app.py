@@ -241,23 +241,18 @@ if __name__ == "__main__":
 
 
 # ================== Admin API: add step (POST) ==================
+# ================== Admin API: add step (POST) ==================
 @app.route("/admin/api/add-step", methods=["POST"])
 def admin_api_add_step():
     if not admin_required():
         return jsonify({"error":"unauth"}), 403
 
     payload = request.json or {}
+    step_name = payload.get("step") or ""
     code = payload.get("code", "").strip().upper()
-    step_name = payload.get("step", "").strip()
-    if not code or not step_name:
-        return jsonify({"error":"missing code or step"}), 400
+    if not step_name or not code:
+        return jsonify({"error":"missing step or code"}), 400
 
-    # التأكد من عدم التكرار
-    checklist = checklist_sheet.get_all_records()
-    for row in checklist:
-        if str(row.get("TrackingCode","")).strip().upper() == code and str(row.get("StepName","")).strip() == step_name:
-            return jsonify({"error":"step already exists"}), 400
-
-    # إضافة الصف الجديد
-    checklist_sheet.append_row([code, step_name, "FALSE"], value_input_option='RAW')
-    return jsonify({"ok": True, "code": code, "step": step_name})
+    # Append row with proper column order: A=Done, B=StepName, C=TrackingCode
+    checklist_sheet.append_row(["FALSE", step_name, code], value_input_option='RAW')
+    return jsonify({"ok": True})
