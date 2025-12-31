@@ -7,23 +7,41 @@
 </head>
 <body>
 
-<div class="container" style="max-width:1000px">
-  <h2>📋 إدارة العملاء والمراحل</h2>
+<div class="admin-layout">
 
-  <!-- Select Client -->
-  <div class="select-box">
-    <div class="select-display" onclick="toggleDropdown()">اختر عميل</div>
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <h4>العملاء</h4>
 
-    <div class="select-dropdown" id="clientDropdown">
-      <input type="text" placeholder="بحث..." onkeyup="filterClients(this.value)">
-      <div id="clientList"></div>
+    <!-- Searchable Dropdown -->
+    <div class="dropdown">
+      <input type="text" id="clientSearch" placeholder="ابحث عن عميل">
+      <div id="clientList" class="dropdown-list"></div>
     </div>
-  </div>
 
-  <!-- Checklist -->
-  <div id="stepsCard" class="steps-card" style="display:none">
-    <h3 id="clientTitle"></h3>
+    <button class="admin-small-btn" onclick="openAddClientModal()">
+      ➕ إضافة عميل جديد
+    </button>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <h3 id="selectedClientTitle">اختر عميل لعرض المراحل</h3>
     <div id="stepsList"></div>
+  </main>
+
+</div>
+
+<!-- Add Client Modal -->
+<div id="addClientModal" class="modal">
+  <div class="modal-content">
+    <h3>إضافة عميل جديد</h3>
+
+    <input id="newClientName" placeholder="اسم العميل">
+    <input id="newClientService" placeholder="نوع الخدمة">
+
+    <button onclick="submitClient()">إضافة</button>
+    <button class="danger" onclick="closeAddClientModal()">إغلاق</button>
   </div>
 </div>
 
@@ -32,40 +50,40 @@ let clientsCache = {};
 let currentCode = null;
 
 /* ================= Load Clients ================= */
-fetch("/admin/api/clients")
-  .then(r => r.json())
-  .then(data => {
-    let list = document.getElementById("clientList");
-    list.innerHTML = "";
-    data.forEach(c => {
-      clientsCache[c.code] = c;
-      let div = document.createElement("div");
-      div.className = "client-option";
-      div.innerText = `${c.name} (${c.code})`;
-      div.onclick = () => selectClient(c.code);
-      list.appendChild(div);
+function loadClients(){
+  fetch("/admin/api/clients")
+    .then(r => r.json())
+    .then(data => {
+      let list = document.getElementById("clientList");
+      list.innerHTML = "";
+      data.forEach(c => {
+        clientsCache[c.code] = c;
+        let div = document.createElement("div");
+        div.className = "client-option";
+        div.innerText = `${c.name} (${c.code})`;
+        div.onclick = () => selectClient(c.code);
+        list.appendChild(div);
+      });
     });
-  });
-
-/* ================= Dropdown ================= */
-function toggleDropdown(){
-  document.getElementById("clientDropdown").classList.toggle("show");
 }
 
-function filterClients(val){
+/* Initial load */
+loadClients();
+
+/* ================= Dropdown Filter ================= */
+document.getElementById("clientSearch").addEventListener("input", e => {
+  let val = e.target.value.toLowerCase();
   document.querySelectorAll(".client-option").forEach(el=>{
-    el.style.display = el.innerText.toLowerCase().includes(val.toLowerCase())
-      ? "block" : "none";
+    el.style.display = el.innerText.toLowerCase().includes(val) ? "block" : "none";
   });
-}
+});
 
 /* ================= Select Client ================= */
 function selectClient(code){
   currentCode = code;
-  document.querySelector(".select-display").innerText =
+  document.getElementById("selectedClientTitle").innerText =
     clientsCache[code].name + " — " + clientsCache[code].service;
 
-  document.getElementById("clientDropdown").classList.remove("show");
   loadChecklist(code);
 }
 
@@ -74,10 +92,6 @@ function loadChecklist(code){
   fetch(`/admin/api/client/${code}/checklist`)
     .then(r => r.json())
     .then(data => {
-      document.getElementById("stepsCard").style.display = "block";
-      document.getElementById("clientTitle").innerText =
-        "مراحل العميل (" + code + ")";
-
       let box = document.getElementById("stepsList");
       box.innerHTML = "";
 
@@ -125,6 +139,32 @@ function deleteStep(step){
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({step})
   }).then(()=>loadChecklist(currentCode));
+}
+
+/* ================= Modal Add Client ================= */
+function openAddClientModal(){
+  document.getElementById("addClientModal").style.display="block";
+}
+
+function closeAddClientModal(){
+  document.getElementById("addClientModal").style.display="none";
+}
+
+function submitClient(){
+  let name = document.getElementById("newClientName").value;
+  let service = document.getElementById("newClientService").value;
+  if(!name) return alert("الرجاء إدخال اسم العميل");
+
+  fetch("/admin/api/add-client",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({name,service})
+  }).then(r=>r.json())
+    .then(data=>{
+      closeAddClientModal();
+      loadClients();
+      alert(`تم إضافة العميل ✅ كود: ${data.code}`);
+    });
 }
 </script>
 
