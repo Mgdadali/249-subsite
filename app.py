@@ -234,3 +234,30 @@ def admin_logout():
 # ================== Run ==================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
+
+
+
+
+
+# ================== Admin API: add step (POST) ==================
+@app.route("/admin/api/add-step", methods=["POST"])
+def admin_api_add_step():
+    if not admin_required():
+        return jsonify({"error":"unauth"}), 403
+
+    payload = request.json or {}
+    code = payload.get("code", "").strip().upper()
+    step_name = payload.get("step", "").strip()
+    if not code or not step_name:
+        return jsonify({"error":"missing code or step"}), 400
+
+    # توليد صف جديد في Checklist
+    # التأكد إنه ما مكرر للعميل نفسه
+    checklist = checklist_sheet.get_all_records()
+    for row in checklist:
+        if str(row.get("TrackingCode","")).strip().upper() == code and str(row.get("StepName","")).strip() == step_name:
+            return jsonify({"error":"step already exists"}), 400
+
+    checklist_sheet.append_row([code, step_name, "FALSE"])
+    return jsonify({"ok": True, "code": code, "step": step_name})
