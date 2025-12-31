@@ -6,6 +6,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+  <button class="add-client-btn" onclick="openAddClientModal()">
+  ➕ إضافة عميل جديد
+</button>
+
 
   <div class="container" style="max-width:900px;margin-top:40px">
     <header style="display:flex;justify-content:space-between;align-items:center">
@@ -40,6 +44,54 @@
 
     </div>
   </div>
+  <div id="addClientModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>إضافة عميل جديد</h3>
+
+    <input type="text" id="newClientName" placeholder="اسم العميل">
+    <input type="text" id="newClientService" placeholder="الخدمة">
+
+    <div style="margin-top:10px;">
+      <button onclick="addClient()">حفظ</button>
+      <button onclick="closeAddClientModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+  <script>
+function openAddClientModal(){
+  document.getElementById("addClientModal").style.display = "block";
+}
+
+function closeAddClientModal(){
+  document.getElementById("addClientModal").style.display = "none";
+}
+
+function addClient(){
+  let name = document.getElementById("newClientName").value;
+  let service = document.getElementById("newClientService").value;
+
+  if(!name){
+    alert("اسم العميل مطلوب");
+    return;
+  }
+
+  fetch("/admin/api/add-client",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ name, service })
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    if(res.ok){
+      alert("تم إضافة العميل بنجاح ✅");
+      closeAddClientModal();
+      location.reload();
+    }
+  });
+}
+</script>
+
+
 
 </body>
 </html>
