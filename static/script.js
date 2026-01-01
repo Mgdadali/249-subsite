@@ -95,7 +95,14 @@ async function renderClientChecklist(code){
     // نسبة التقدم
     const percent = steps.length ? Math.round((completed / steps.length) * 100) : 0;
     pctEl.textContent = percent + "%";
-    barEl.style.width = percent + "%";
+      barEl.style.width = percent + "%";
+
+if (percent === 100) {
+  barEl.classList.add("complete");
+} else {
+  barEl.classList.remove("complete");
+}
+
     // لون الشريط أخضر لو 100% وإلا أزرق
     if (percent === 100) barEl.style.background = 'linear-gradient(90deg,#28a745,#1db954)';
     else barEl.style.background = 'linear-gradient(90deg,var(--blue-900,var(--blue-600)),var(--blue-600))';
