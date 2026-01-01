@@ -149,7 +149,8 @@
               <div class="step-badge">${idx+1}</div>
               <div class="step-text"><strong>${s.name}</strong><div class="muted"></div></div>
             </div>
-            <div class="step-right">${s.done ? '✅' : '⏳'}</div>
+            <div class="step-right ${s.done ? 'done' : ''}"></div>
+
           `;
           listEl.appendChild(li);
           if (s.done) completed++;
