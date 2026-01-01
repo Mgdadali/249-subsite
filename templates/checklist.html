@@ -149,7 +149,10 @@
               <div class="step-badge">${idx+1}</div>
               <div class="step-text"><strong>${s.name}</strong><div class="muted"></div></div>
             </div>
-            <div class="step-right ${s.done ? 'done' : ''}"></div>
+            <div class="step-right ${s.done ? 'done' : ''}">
+  ${s.done ? '<span class="check-icon"></span>' : ''}
+</div>
+
 
           `;
           listEl.appendChild(li);
