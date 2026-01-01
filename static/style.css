@@ -115,6 +115,14 @@ body{
   0%   { background-position: 0% 0; }
   100% { background-position: 300% 0; }
 }
+.progress-bar-outer{
+  width:100%;
+  height:14px;
+  background:#e6eef8;
+  border-radius:999px;
+  overflow:hidden; /* 🔥 دا المفتاح */
+}
+
 
 /* عند الاكتمال */
 .progress-bar-inner.complete{
