@@ -477,4 +477,37 @@ body{
   border-color: #1e88e5;
   animation: shine 1.5s infinite alternate, moveUpDown 2s infinite alternate;
 }
+/* ====== CLIENT CHECKLIST – SHINE FIX (ONLY THIS) ====== */
+
+.progress-bar-inner{
+  position: relative; /* ضروري */
+  overflow: hidden;
+}
+
+.progress-bar-inner::after{
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,.6) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  animation: progressShineMove 2.2s ease-in-out infinite;
+}
+
+@keyframes progressShineMove{
+  0%   { left: -40%; }
+  100% { left: 120%; }
+}
+
+/* لما يكتمل الشريط */
+.progress-bar-inner.complete::after{
+  display: none;
+}
+
 
