@@ -511,32 +511,22 @@ body{
   display: none;
 }
 ##علامه الصح للاكتمال 
-/* ===== Professional Check Icon (Client Checklist) ===== */
-/* ===== Client Checklist – Professional Check Icon ===== */
-
-.step-right{
-  min-width:34px;
-  height:34px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#eaf2ff;
+/* ===== علامة الصح الاحترافية في Checklist ===== */
+.checklist-list li .step-right.done {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #28a745, #22c55e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
-/* الحالة المكتملة */
-.step-right.done{
-  background: linear-gradient(135deg,#28a745,#1db954);
-  box-shadow: 0 0 0 3px rgba(40,167,69,.2);
-  position:relative;
-}
-
-/* رسم علامة الصح */
-.step-right.done::after{
-  content:'';
-  width:11px;
-  height:6px;
-  border-left:3px solid #fff;
-  border-bottom:3px solid #fff;
-  transform:rotate(-45deg);
+.checklist-list li .step-right.done::after {
+  content: "✔";
+  font-size: 14px;
+  color: #fff;
+  font-weight: bold;
 }
