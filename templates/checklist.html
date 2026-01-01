@@ -143,24 +143,24 @@
         listEl.innerHTML = '';
         steps.forEach((s, idx) => {
           const li = document.createElement('li');
-          li.className = s.done === true 
-  ? 'done'
-  : s.done === false
-  ? 'pending'
-  : 'waiting';
+          li.className = s.done ? 'done' : 'pending';
           li.innerHTML = `
   <div class="step-left">
-    <div class="step-badge">${idx+1}</div>
-    <div class="step-text"><strong>${s.name}</strong></div>
+    <div class="step-badge">${idx + 1}</div>
+    <div class="step-text">
+      <strong>${s.name}</strong>
+    </div>
   </div>
+
   <div class="step-right">
     ${
-      s.done === true
-      ? '<span class="check-icon"></span>'
-      : '<span class="spinner"></span>'
+      s.done
+        ? '<span class="check-icon"></span>'
+        : '<span class="spinner"></span>'
     }
   </div>
 `;
+
 
 
 
