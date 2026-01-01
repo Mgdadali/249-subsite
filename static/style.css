@@ -530,3 +530,23 @@ body{
   font-size: 13px;
   font-weight: bold;
 }
+/* ===== Elegant Check (Professional) ===== */
+.checklist-list li .step-right .check-icon{
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #28a745;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+
+.checklist-list li .step-right .check-icon::after{
+  content: "✓";
+  color: #28a745;
+  font-size: 14px;
+  font-weight: 700;
+}
+
