@@ -511,13 +511,24 @@ body{
   display: none;
 }
 ##علامه الصح 
-/* الأساس لعنصر step-right */
-.checklist-list li .step-right{
-  width: 26px;
-  height: 26px;
+/* ===== Dynamic Check ===== */
+.checklist-list li .step-right .check-icon{
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(135deg,#22c55e,#16a34a);
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: rotate(-3deg);
+  box-shadow: 0 4px 10px rgba(0,0,0,.25);
+}
+
+.checklist-list li .step-right .check-icon::after{
+  content: "✔";
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
 }
 
 
