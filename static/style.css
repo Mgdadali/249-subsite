@@ -510,6 +510,17 @@ body{
 .progress-bar-inner.complete::after{
   display: none;
 }
+##علامه الصح 
+/* الأساس لعنصر step-right */
+.checklist-list li .step-right{
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
 ##علامه الصح للاكتمال 
 /* ===== علامة الصح الاحترافية في Checklist ===== */
 .checklist-list li .step-right.done {
