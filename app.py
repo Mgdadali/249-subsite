@@ -63,7 +63,7 @@ def client_page(code):
 
 # ================== Client Tracking API ==================
 @app.route("/track")
-def track():
+ def track():
     code = request.args.get("code","").strip().upper()
     if not code:
         return jsonify({"error":"missing code"}), 400
