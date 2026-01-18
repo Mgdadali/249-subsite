@@ -309,6 +309,30 @@ def delete_general_step():
     
     return jsonify({"error": "step not found"}), 404
 
+@app.route("/admin/api/reorder-steps", methods=["POST"])
+@admin_required
+def reorder_steps():
+    """إعادة ترتيب المراحل العامة"""
+    new_order = request.json.get("steps", [])
+    
+    if not new_order:
+        return jsonify({"error": "missing steps"}), 400
+    
+    try:
+        # حذف جميع الصفوف الحالية (ما عدا الهيدر)
+        row_count = steps_sheet.row_count
+        if row_count > 1:
+            steps_sheet.delete_rows(2, row_count)
+        
+        # إضافة المراحل بالترتيب الجديد
+        for step in new_order:
+            steps_sheet.append_row([step])
+        
+        cache.clear("all_steps")
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ================== Run ==================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=True)
