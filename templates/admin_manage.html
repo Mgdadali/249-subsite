@@ -6,93 +6,169 @@
   <title>إدارة العملاء - 249</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    .admin-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;max-width:1200px;margin:30px auto;padding:0 20px}
-    .sidebar{background:#fff;border-radius:12px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,.06);height:fit-content;position:sticky;top:20px}
-    .main-panel{background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 12px rgba(0,0,0,.06);min-height:600px}
+    body{background:#f5f7fa;font-family:'Bahij',Tahoma,Arial,sans-serif;margin:0;padding:0}
     
-    .search-input{width:100%;padding:10px 12px;border:1px solid #e0e7f1;border-radius:8px;margin-bottom:12px;font-size:14px}
-    .search-input:focus{outline:none;border-color:#1e90ff;box-shadow:0 0 0 3px rgba(30,144,255,.1)}
+    .top-bar{background:#fff;padding:16px 24px;box-shadow:0 2px 8px rgba(0,0,0,.05);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+    .top-bar h1{margin:0;font-size:22px;color:#1e293b}
+    .top-bar .actions{display:flex;gap:16px;align-items:center}
+    .top-bar a{color:#64748b;text-decoration:none;font-size:14px;transition:.2s}
+    .top-bar a:hover{color:#1e293b}
+    .logout-link{color:#ef4444!important}
     
-    .client-item{display:block;width:100%;padding:12px;margin-bottom:8px;background:#f8fbff;border:1px solid #e6f0ff;border-radius:8px;text-align:right;cursor:pointer;transition:.2s}
-    .client-item:hover{background:#e6f0ff;transform:translateX(-3px)}
-    .client-item.active{background:#1e90ff;color:#fff;border-color:#1e90ff}
+    .main-container{max-width:1400px;margin:24px auto;padding:0 20px;display:grid;grid-template-columns:320px 1fr;gap:20px}
     
-    .btn-add{width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;margin-bottom:16px}
-    .btn-add:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(34,197,94,.3)}
+    /* Sidebar */
+    .sidebar{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.06);height:fit-content;position:sticky;top:80px}
+    .add-client-btn{width:100%;padding:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;margin-bottom:16px;transition:.2s}
+    .add-client-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(59,130,246,.3)}
     
-    .step-item{display:flex;justify-content:space-between;align-items:center;padding:14px;margin-bottom:10px;background:#f9fafb;border-radius:10px;border-right:4px solid #cbd5e1}
-    .step-item.done{background:#f0fdf4;border-right-color:#22c55e}
+    .search-box{position:relative;margin-bottom:16px}
+    .search-box input{width:100%;padding:10px 36px 10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;transition:.2s}
+    .search-box input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    .search-box::after{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none}
     
-    .step-actions{display:flex;gap:8px}
-    .btn-sm{padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:.2s}
-    .btn-toggle{background:#3b82f6;color:#fff}
-    .btn-toggle:hover{background:#2563eb}
-    .btn-delete{background:#ef4444;color:#fff}
-    .btn-delete:hover{background:#dc2626}
+    .clients-list{max-height:calc(100vh - 300px);overflow-y:auto;padding-left:4px}
+    .client-card{background:#f8fafc;padding:12px;margin-bottom:8px;border-radius:8px;cursor:pointer;transition:.2s;border:2px solid transparent}
+    .client-card:hover{background:#e0f2fe;border-color:#3b82f6}
+    .client-card.active{background:#3b82f6;color:#fff;border-color:#2563eb}
+    .client-card .name{font-weight:600;margin-bottom:4px;font-size:15px}
+    .client-card .code{font-size:12px;opacity:.8}
+    .empty-list{text-align:center;padding:40px 20px;color:#94a3b8;font-size:14px}
     
-    .empty-state{text-align:center;padding:60px 20px;color:#94a3b8}
-    .empty-state img{width:120px;opacity:.5;margin-bottom:16px}
+    /* Main Panel */
+    .main-panel{background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.06);min-height:600px}
+    .empty-state{text-align:center;padding:80px 20px;color:#94a3b8}
+    .empty-state svg{width:100px;height:100px;margin-bottom:16px;opacity:.5}
     
-    .loading{text-align:center;padding:40px;color:#64748b}
-    .spinner{display:inline-block;width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite}
+    .client-header{border-bottom:2px solid #f1f5f9;padding-bottom:20px;margin-bottom:24px}
+    .client-header h2{margin:0 0 8px;font-size:24px;color:#0f172a}
+    .client-header .meta{color:#64748b;font-size:14px}
+    
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px}
+    .stat-box{background:linear-gradient(135deg,#f8fafc,#f1f5f9);padding:16px;border-radius:10px;text-align:center}
+    .stat-box .number{font-size:28px;font-weight:700;color:#0f172a}
+    .stat-box .label{font-size:13px;color:#64748b;margin-top:4px}
+    
+    .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .section-title{font-size:18px;font-weight:600;color:#1e293b}
+    .add-step-btn{padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+    .add-step-btn:hover{background:#059669;transform:translateY(-1px)}
+    
+    /* Steps List - Simple & Clean */
+    .steps-container{display:grid;gap:8px}
+    .step-row{background:#fafbfc;padding:12px 16px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border-left:3px solid #e2e8f0;transition:.2s}
+    .step-row:hover{background:#f1f5f9;border-left-color:#3b82f6}
+    .step-row.enabled{background:#fff;border-left-color:#3b82f6}
+    .step-row.enabled.done{background:#f0fdf4;border-left-color:#10b981}
+    
+    .step-info{flex:1}
+    .step-name{font-weight:500;color:#1e293b;font-size:15px}
+    .step-status{font-size:12px;color:#94a3b8;margin-top:2px}
+    .step-status.active{color:#3b82f6}
+    .step-status.completed{color:#10b981}
+    
+    .step-controls{display:flex;gap:8px;align-items:center}
+    
+    /* Toggle Switch */
+    .switch{position:relative;width:44px;height:24px;cursor:pointer}
+    .switch input{opacity:0;width:0;height:0}
+    .slider{position:absolute;inset:0;background:#cbd5e1;border-radius:24px;transition:.3s}
+    .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    .switch input:checked + .slider{background:#3b82f6}
+    .switch input:checked + .slider:before{transform:translateX(20px)}
+    
+    /* Checkbox */
+    .checkbox-wrapper{position:relative;width:22px;height:22px}
+    .checkbox-wrapper input{position:absolute;opacity:0;cursor:pointer;width:100%;height:100%}
+    .checkmark{position:absolute;top:0;left:0;height:22px;width:22px;background:#fff;border:2px solid #cbd5e1;border-radius:5px;transition:.2s}
+    .checkbox-wrapper:hover .checkmark{border-color:#3b82f6}
+    .checkbox-wrapper input:checked ~ .checkmark{background:#10b981;border-color:#10b981}
+    .checkmark:after{content:"";position:absolute;display:none;left:6px;top:2px;width:5px;height:10px;border:solid white;border-width:0 2px 2px 0;transform:rotate(45deg)}
+    .checkbox-wrapper input:checked ~ .checkmark:after{display:block}
+    .checkbox-wrapper input:disabled ~ .checkmark{background:#f1f5f9;border-color:#e2e8f0;cursor:not-allowed}
+    
+    .loading{text-align:center;padding:60px;color:#94a3b8}
+    .spinner{display:inline-block;width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     
-    .panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-    .panel-title{font-size:20px;font-weight:700;color:#0f172a}
+    /* Modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000}
+    .modal.show{display:flex}
+    .modal-content{background:#fff;padding:28px;border-radius:12px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:slideUp .3s}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .modal-content h3{margin:0 0 20px;font-size:20px}
+    .modal-input{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:14px;font-size:15px}
+    .modal-input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    .modal-actions{display:flex;gap:10px;margin-top:20px}
+    .modal-btn{flex:1;padding:12px;border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:.2s}
+    .modal-btn.primary{background:#3b82f6;color:#fff}
+    .modal-btn.primary:hover{background:#2563eb}
+    .modal-btn.secondary{background:#f1f5f9;color:#334155}
     
-    .stats-card{background:linear-gradient(135deg,#3b82f6,#1e40af);color:#fff;padding:16px;border-radius:10px;margin-bottom:20px}
-    .stats-card h4{margin:0 0 8px;font-size:14px;opacity:.9}
-    .stats-card .number{font-size:28px;font-weight:700}
-    
-    @media (max-width:900px){
-      .admin-layout{grid-template-columns:1fr;gap:16px}
+    @media (max-width:1024px){
+      .main-container{grid-template-columns:1fr;gap:16px}
       .sidebar{position:static}
     }
   </style>
 </head>
 <body>
-  <div class="container" style="max-width:1240px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h2>📋 إدارة العملاء والمراحل</h2>
-      <div>
-        <a href="/admin/dashboard" style="margin-left:16px;color:#64748b;text-decoration:none">← لوحة التحكم</a>
-        <a href="/admin/logout" style="color:#ef4444;text-decoration:none">تسجيل خروج</a>
-      </div>
-    </div>
-    
-    <div class="admin-layout">
-      <!-- Sidebar -->
-      <aside class="sidebar">
-        <button class="btn-add" onclick="openAddClientModal()">➕ إضافة عميل جديد</button>
-        <input type="text" class="search-input" id="searchClients" placeholder="🔍 بحث عن عميل...">
-        <div id="clientsList" class="loading">
-          <div class="spinner"></div>
-          <p>جاري التحميل...</p>
-        </div>
-      </aside>
-      
-      <!-- Main Panel -->
-      <main class="main-panel">
-        <div id="mainContent" class="empty-state">
-          <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          <h3>اختر عميلاً من القائمة</h3>
-          <p>اضغط على أي عميل لعرض وإدارة مراحله</p>
-        </div>
-      </main>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <h1>📋 إدارة العملاء والمراحل</h1>
+    <div class="actions">
+      <a href="/">← الصفحة الرئيسية</a>
+      <a href="/admin/logout" class="logout-link">تسجيل خروج</a>
     </div>
   </div>
   
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <button class="add-client-btn" onclick="openModal('addClient')">➕ إضافة عميل جديد</button>
+      
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="ابحث عن عميل...">
+      </div>
+      
+      <div id="clientsList" class="clients-list">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </aside>
+    
+    <!-- Main Panel -->
+    <main class="main-panel">
+      <div id="mainContent" class="empty-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <h3>اختر عميلاً من القائمة</h3>
+        <p>اضغط على أي عميل لعرض وإدارة مراحله</p>
+      </div>
+    </main>
+  </div>
+  
   <!-- Modal: Add Client -->
-  <div id="addClientModal" class="modal-overlay" style="display:none">
-    <div class="modal-box">
+  <div id="addClientModal" class="modal">
+    <div class="modal-content">
       <h3>➕ إضافة عميل جديد</h3>
-      <input type="text" id="newClientName" placeholder="اسم العميل" class="modal-input">
-      <input type="text" id="newClientService" placeholder="نوع الخدمة" class="modal-input">
+      <input type="text" id="clientName" class="modal-input" placeholder="اسم العميل">
+      <input type="text" id="clientService" class="modal-input" placeholder="نوع الخدمة">
       <div class="modal-actions">
-        <button onclick="submitAddClient()" class="modal-btn primary">حفظ</button>
-        <button onclick="closeModal('addClientModal')" class="modal-btn">إلغاء</button>
+        <button class="modal-btn primary" onclick="submitAddClient()">حفظ</button>
+        <button class="modal-btn secondary" onclick="closeModal('addClient')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal: Add Step -->
+  <div id="addStepModal" class="modal">
+    <div class="modal-content">
+      <h3>📝 إضافة مرحلة جديدة</h3>
+      <input type="text" id="stepName" class="modal-input" placeholder="اسم المرحلة">
+      <div class="modal-actions">
+        <button class="modal-btn primary" onclick="submitAddStep()">حفظ</button>
+        <button class="modal-btn secondary" onclick="closeModal('addStep')">إلغاء</button>
       </div>
     </div>
   </div>
@@ -101,157 +177,163 @@
     let allClients = [];
     let currentClient = null;
     
-    // Load clients on page load
     document.addEventListener('DOMContentLoaded', loadClients);
     
-    // Search functionality
-    document.getElementById('searchClients').addEventListener('input', (e) => {
+    document.getElementById('searchInput').addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase();
       const filtered = allClients.filter(c => 
         c.name.toLowerCase().includes(query) || c.code.toLowerCase().includes(query)
       );
-      renderClientsList(filtered);
+      renderClients(filtered);
     });
     
     async function loadClients() {
       const list = document.getElementById('clientsList');
       try {
         const res = await fetch('/admin/api/clients');
-        if (!res.ok) throw new Error('Failed to load');
         allClients = await res.json();
-        renderClientsList(allClients);
+        renderClients(allClients);
       } catch (err) {
-        list.innerHTML = '<p style="color:#ef4444;padding:20px">خطأ في التحميل</p>';
+        list.innerHTML = '<div class="empty-list">خطأ في التحميل</div>';
       }
     }
     
-    function renderClientsList(clients) {
+    function renderClients(clients) {
       const list = document.getElementById('clientsList');
       if (!clients.length) {
-        list.innerHTML = '<p class="empty-state" style="padding:20px;text-align:center;color:#94a3b8">لا يوجد عملاء</p>';
+        list.innerHTML = '<div class="empty-list">لا يوجد عملاء</div>';
         return;
       }
       
       list.innerHTML = clients.map(c => `
-        <button class="client-item ${currentClient?.code === c.code ? 'active' : ''}" 
-                onclick="loadClientDetails('${c.code}', '${c.name}')">
-          <div style="font-weight:600;margin-bottom:4px">${c.name}</div>
-          <div style="font-size:12px;opacity:.7">${c.code}</div>
-        </button>
+        <div class="client-card ${currentClient?.code === c.code ? 'active' : ''}" 
+             onclick="loadClient('${c.code}', '${escapeHtml(c.name)}', '${escapeHtml(c.service)}')">
+          <div class="name">${c.name}</div>
+          <div class="code">${c.code}</div>
+        </div>
       `).join('');
     }
     
-    async function loadClientDetails(code, name) {
-      currentClient = { code, name };
+    async function loadClient(code, name, service) {
+      currentClient = { code, name, service };
       
-      // Update active state
-      document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
-      event.target.closest('.client-item').classList.add('active');
+      document.querySelectorAll('.client-card').forEach(el => el.classList.remove('active'));
+      event.target.closest('.client-card').classList.add('active');
       
       const panel = document.getElementById('mainContent');
-      panel.innerHTML = '<div class="loading"><div class="spinner"></div><p>جاري التحميل...</p></div>';
+      panel.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
       
       try {
-        const res = await fetch(`/admin/api/client/${code}/steps`);
+        const res = await fetch(`/admin/api/client/${code}/all-steps`);
         const steps = await res.json();
         
-        const doneCount = steps.filter(s => s.done).length;
-        const progress = Math.round((doneCount / steps.length) * 100);
+        const enabled = steps.filter(s => s.enabled).length;
+        const done = steps.filter(s => s.done).length;
+        const progress = enabled ? Math.round((done / enabled) * 100) : 0;
         
         panel.innerHTML = `
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">${name}</h3>
-              <p style="color:#64748b;margin:4px 0">كود المتابعة: <strong>${code}</strong></p>
+          <div class="client-header">
+            <h2>${name}</h2>
+            <div class="meta">كود المتابعة: <strong>${code}</strong> • الخدمة: ${service || 'غير محدد'}</div>
+          </div>
+          
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="number">${enabled}</div>
+              <div class="label">مراحل مفعّلة</div>
+            </div>
+            <div class="stat-box">
+              <div class="number">${done}</div>
+              <div class="label">مكتملة</div>
+            </div>
+            <div class="stat-box">
+              <div class="number">${progress}%</div>
+              <div class="label">نسبة الإنجاز</div>
             </div>
           </div>
           
-          <div class="stats-card">
-            <h4>نسبة الإنجاز</h4>
-            <div class="number">${progress}%</div>
-            <div style="font-size:14px;margin-top:4px">${doneCount} من ${steps.length} مرحلة مكتملة</div>
+          <div class="section-header">
+            <div class="section-title">المراحل المتاحة</div>
+            <button class="add-step-btn" onclick="openModal('addStep')">+ إضافة مرحلة</button>
           </div>
           
-          <div style="margin-bottom:12px">
-            <h4 style="margin-bottom:12px">المراحل</h4>
-          </div>
-          
-          <div id="stepsList">
+          <div class="steps-container" id="stepsList">
             ${steps.map(s => `
-              <div class="step-item ${s.done ? 'done' : ''}">
-                <div>
-                  <div style="font-weight:600;margin-bottom:4px">${s.name}</div>
-                  <div style="font-size:12px;color:#64748b">${s.done ? '✓ مكتملة' : '○ قيد الانتظار'}</div>
+              <div class="step-row ${s.enabled ? 'enabled' : ''} ${s.done ? 'done' : ''}">
+                <div class="step-info">
+                  <div class="step-name">${s.name}</div>
+                  <div class="step-status ${s.enabled ? (s.done ? 'completed' : 'active') : ''}">
+                    ${s.enabled ? (s.done ? '✓ مكتملة' : '○ قيد الانتظار') : '• غير مفعّلة'}
+                  </div>
                 </div>
-                <div class="step-actions">
-                  <button class="btn-sm btn-toggle" onclick="toggleStep('${code}', '${escapeHtml(s.name)}')">
-                    ${s.done ? 'إلغاء ✓' : 'تعليم ✓'}
-                  </button>
-                  <button class="btn-sm btn-delete" onclick="deleteStep('${code}', '${escapeHtml(s.name)}')">
-                    🗑️
-                  </button>
+                <div class="step-controls">
+                  ${s.enabled ? `
+                    <div class="checkbox-wrapper" title="تعليم كمكتملة">
+                      <input type="checkbox" ${s.done ? 'checked' : ''} 
+                             onchange="toggleDone('${code}', '${escapeHtml(s.name)}')">
+                      <span class="checkmark"></span>
+                    </div>
+                  ` : ''}
+                  <label class="switch" title="${s.enabled ? 'إلغاء التفعيل' : 'تفعيل'}">
+                    <input type="checkbox" ${s.enabled ? 'checked' : ''} 
+                           onchange="toggleEnabled('${code}', '${escapeHtml(s.name)}')">
+                    <span class="slider"></span>
+                  </label>
                 </div>
               </div>
             `).join('')}
           </div>
         `;
       } catch (err) {
-        panel.innerHTML = '<p style="color:#ef4444;text-align:center;padding:40px">حدث خطأ في التحميل</p>';
+        panel.innerHTML = '<div class="empty-state"><p style="color:#ef4444">حدث خطأ في التحميل</p></div>';
       }
     }
     
-    async function toggleStep(code, stepName) {
+    async function toggleEnabled(code, stepName) {
       try {
         const res = await fetch(`/admin/api/client/${code}/toggle-step`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ step: stepName })
         });
-        
-        if (res.ok) {
-          loadClientDetails(code, currentClient.name);
-        }
+        if (res.ok) loadClient(code, currentClient.name, currentClient.service);
       } catch (err) {
         alert('حدث خطأ');
       }
     }
     
-    async function deleteStep(code, stepName) {
-      if (!confirm(`هل أنت متأكد من حذف المرحلة "${stepName}"؟`)) return;
-      
+    async function toggleDone(code, stepName) {
       try {
-        const res = await fetch(`/admin/api/client/${code}/delete-step`, {
+        const res = await fetch(`/admin/api/client/${code}/toggle-done`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ step: stepName })
         });
-        
-        if (res.ok) {
-          loadClientDetails(code, currentClient.name);
-        }
+        if (res.ok) loadClient(code, currentClient.name, currentClient.service);
       } catch (err) {
-        alert('حدث خطأ في الحذف');
+        alert('حدث خطأ');
       }
     }
     
-    function openAddClientModal() {
-      document.getElementById('addClientModal').style.display = 'flex';
-      document.getElementById('newClientName').value = '';
-      document.getElementById('newClientService').value = '';
+    function openModal(type) {
+      document.getElementById(type + 'Modal').classList.add('show');
+      if (type === 'addClient') {
+        document.getElementById('clientName').value = '';
+        document.getElementById('clientService').value = '';
+      } else {
+        document.getElementById('stepName').value = '';
+      }
     }
     
-    function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
+    function closeModal(type) {
+      document.getElementById(type + 'Modal').classList.remove('show');
     }
     
     async function submitAddClient() {
-      const name = document.getElementById('newClientName').value.trim();
-      const service = document.getElementById('newClientService').value.trim();
+      const name = document.getElementById('clientName').value.trim();
+      const service = document.getElementById('clientService').value.trim();
       
-      if (!name) {
-        alert('اسم العميل مطلوب');
-        return;
-      }
+      if (!name) { alert('اسم العميل مطلوب'); return; }
       
       try {
         const res = await fetch('/admin/api/add-client', {
@@ -259,11 +341,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, service })
         });
-        
         const data = await res.json();
         if (data.ok) {
-          alert(`✅ تم إضافة العميل بنجاح!\n\nكود المتابعة: ${data.code}`);
-          closeModal('addClientModal');
+          alert(`✅ تم إضافة العميل بنجاح!\nكود المتابعة: ${data.code}`);
+          closeModal('addClient');
           loadClients();
         }
       } catch (err) {
@@ -271,22 +352,30 @@
       }
     }
     
+    async function submitAddStep() {
+      const step = document.getElementById('stepName').value.trim();
+      if (!step) { alert('اسم المرحلة مطلوب'); return; }
+      
+      try {
+        const res = await fetch('/admin/api/add-step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ step })
+        });
+        if (res.ok) {
+          alert('✅ تم إضافة المرحلة بنجاح');
+          closeModal('addStep');
+          if (currentClient) loadClient(currentClient.code, currentClient.name, currentClient.service);
+        }
+      } catch (err) {
+        alert('حدث خطأ');
+      }
+    }
+    
     function escapeHtml(text) {
-      return text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return text.replace(/[&<>"']/g, m => map[m]);
     }
   </script>
-  
-  <style>
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000}
-    .modal-box{background:#fff;padding:28px;border-radius:14px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-    .modal-box h3{margin:0 0 20px;font-size:20px}
-    .modal-input{width:100%;padding:12px;border:1px solid #e0e7f1;border-radius:8px;margin-bottom:14px;font-size:15px}
-    .modal-input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
-    .modal-actions{display:flex;gap:10px;margin-top:20px}
-    .modal-btn{flex:1;padding:12px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
-    .modal-btn.primary{background:#3b82f6;color:#fff}
-    .modal-btn.primary:hover{background:#2563eb}
-    .modal-btn:not(.primary){background:#f1f5f9;color:#334155}
-  </style>
 </body>
 </html>
