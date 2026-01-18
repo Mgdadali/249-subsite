@@ -11,9 +11,9 @@ app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv("SECRET_KEY", "249-secret-key")
 
-# ================== Simple Cache (تخزين مؤقت) ==================
+# ================== Simple Cache ==================
 class SimpleCache:
-    def __init__(self, ttl=60):
+    def __init__(self, ttl=30):
         self.cache = {}
         self.ttl = ttl
     
@@ -35,7 +35,7 @@ class SimpleCache:
         else:
             self.cache.clear()
 
-cache = SimpleCache(ttl=30)  # 30 ثانية
+cache = SimpleCache(ttl=30)
 
 # ================== Google Sheets ==================
 scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]
@@ -63,45 +63,35 @@ def admin_required(f):
 
 # ================== Helper Functions ==================
 def get_all_clients(use_cache=True):
-    """جلب جميع العملاء مع التخزين المؤقت"""
     if use_cache:
         cached = cache.get("all_clients")
         if cached:
             return cached
-    
     clients = clients_sheet.get_all_records()
     cache.set("all_clients", clients)
     return clients
 
 def get_all_steps(use_cache=True):
-    """جلب جميع المراحل العامة"""
     if use_cache:
         cached = cache.get("all_steps")
         if cached:
             return cached
-    
     steps = [r["StepName"] for r in steps_sheet.get_all_records()]
     cache.set("all_steps", steps)
     return steps
 
-def get_client_steps(code, use_cache=True):
-    """جلب مراحل عميل محدد"""
-    cache_key = f"client_steps_{code}"
-    if use_cache:
-        cached = cache.get(cache_key)
-        if cached:
-            return cached
-    
-    steps = {}
-    for r in checklist_sheet.get_all_records():
-        if r.get("TrackingCode", "").strip().upper() == code:
-            steps[r["StepName"]] = str(r.get("Done", "")).strip().upper() == "TRUE"
-    
-    cache.set(cache_key, steps)
-    return steps
+def get_client_checklist(code):
+    """جلب جميع المراحل المفعّلة للعميل مع حالاتها"""
+    checklist_data = checklist_sheet.get_all_records()
+    result = {}
+    for row in checklist_data:
+        if row.get("TrackingCode", "").strip().upper() == code:
+            step_name = row.get("StepName", "").strip()
+            is_done = str(row.get("Done", "")).strip().upper() == "TRUE"
+            result[step_name] = is_done
+    return result
 
 def find_checklist_row(code, step_name):
-    """العثور على صف في الـ Checklist"""
     values = checklist_sheet.get_all_values()
     for idx, row in enumerate(values[1:], start=2):
         if len(row) >= 3:
@@ -143,10 +133,15 @@ def track():
     if not client_data:
         return jsonify({"error": "invalid code"}), 404
     
-    all_steps = get_all_steps()
-    client_steps = get_client_steps(code)
+    # جلب المراحل المفعّلة فقط للعميل
+    client_checklist = get_client_checklist(code)
     
-    checklist = [{"name": s, "done": client_steps.get(s, False)} for s in all_steps]
+    # ترتيب المراحل حسب القائمة العامة
+    all_steps = get_all_steps()
+    checklist = []
+    for step in all_steps:
+        if step in client_checklist:
+            checklist.append({"name": step, "done": client_checklist[step]})
     
     return jsonify({
         "name": client_data.get("Name", ""),
@@ -164,7 +159,7 @@ def admin_login():
         for admin in admins_sheet.get_all_records():
             if admin.get("Username") == username and str(admin.get("Password")) == password:
                 session["admin"] = username
-                return redirect("/admin/dashboard")
+                return redirect("/admin/manage")  # توجيه مباشر لصفحة الإدارة
         
         return render_template("admin_login.html", error="بيانات غير صحيحة")
     
@@ -175,12 +170,6 @@ def logout():
     session.clear()
     return redirect("/admin")
 
-# ================== Routes: Admin Dashboard ==================
-@app.route("/admin/dashboard")
-@admin_required
-def admin_dashboard():
-    return render_template("admin_dashboard.html")
-
 @app.route("/admin/manage")
 @admin_required
 def admin_manage():
@@ -190,8 +179,7 @@ def admin_manage():
 @app.route("/admin/api/clients")
 @admin_required
 def admin_clients():
-    clients = get_all_clients(use_cache=False)  # دائماً بيانات محدثة للأدمن
-    
+    clients = get_all_clients(use_cache=False)
     return jsonify([{
         "code": r.get("TrackingCode", ""),
         "name": r.get("Name", ""),
@@ -210,27 +198,33 @@ def admin_add_client():
     
     code = secrets.token_hex(4).upper()
     clients_sheet.append_row([code, name, service])
-    
     cache.clear("all_clients")
     
     return jsonify({"ok": True, "code": code})
 
-# ================== API: Admin - Steps ==================
-@app.route("/admin/api/client/<code>/steps")
+# ================== API: Admin - Steps Management ==================
+@app.route("/admin/api/client/<code>/all-steps")
 @admin_required
-def admin_client_steps(code):
+def admin_all_steps(code):
+    """جلب جميع المراحل العامة مع حالة التفعيل والإكمال للعميل"""
     code = code.strip().upper()
     all_steps = get_all_steps(use_cache=False)
-    client_steps = get_client_steps(code, use_cache=False)
+    client_checklist = get_client_checklist(code)
     
-    return jsonify([{
-        "name": s,
-        "done": client_steps.get(s, False)
-    } for s in all_steps])
+    result = []
+    for step in all_steps:
+        result.append({
+            "name": step,
+            "enabled": step in client_checklist,  # هل المرحلة مفعّلة للعميل؟
+            "done": client_checklist.get(step, False)  # هل مكتملة؟
+        })
+    
+    return jsonify(result)
 
 @app.route("/admin/api/client/<code>/toggle-step", methods=["POST"])
 @admin_required
-def toggle_step(code):
+def toggle_step_enabled(code):
+    """تفعيل/إلغاء تفعيل مرحلة للعميل"""
     code = code.strip().upper()
     step_name = request.json.get("step", "").strip()
     
@@ -240,21 +234,19 @@ def toggle_step(code):
     row_num = find_checklist_row(code, step_name)
     
     if row_num:
-        # قراءة الحالة الحالية
-        current_value = checklist_sheet.cell(row_num, 1).value
-        new_value = "FALSE" if current_value == "TRUE" else "TRUE"
-        checklist_sheet.update_cell(row_num, 1, new_value)
+        # المرحلة موجودة - حذفها (إلغاء التفعيل)
+        checklist_sheet.delete_rows(row_num)
     else:
-        # إضافة صف جديد
-        checklist_sheet.append_row(["TRUE", step_name, code])
+        # المرحلة غير موجودة - إضافتها (تفعيل)
+        checklist_sheet.append_row(["FALSE", step_name, code])
     
-    cache.clear(f"client_steps_{code}")
-    
+    cache.clear(f"client_checklist_{code}")
     return jsonify({"ok": True})
 
-@app.route("/admin/api/client/<code>/delete-step", methods=["POST"])
+@app.route("/admin/api/client/<code>/toggle-done", methods=["POST"])
 @admin_required
-def delete_step(code):
+def toggle_step_done(code):
+    """تبديل حالة الإكمال للمرحلة"""
     code = code.strip().upper()
     step_name = request.json.get("step", "").strip()
     
@@ -263,16 +255,21 @@ def delete_step(code):
     
     row_num = find_checklist_row(code, step_name)
     
-    if row_num:
-        checklist_sheet.delete_rows(row_num)
-        cache.clear(f"client_steps_{code}")
-        return jsonify({"ok": True})
+    if not row_num:
+        return jsonify({"error": "step not enabled"}), 400
     
-    return jsonify({"error": "step not found"}), 404
+    # قراءة الحالة الحالية وعكسها
+    current_value = checklist_sheet.cell(row_num, 1).value
+    new_value = "FALSE" if current_value == "TRUE" else "TRUE"
+    checklist_sheet.update_cell(row_num, 1, new_value)
+    
+    cache.clear(f"client_checklist_{code}")
+    return jsonify({"ok": True})
 
 @app.route("/admin/api/add-step", methods=["POST"])
 @admin_required
 def admin_add_step():
+    """إضافة مرحلة جديدة للقائمة العامة"""
     step = request.json.get("step", "").strip()
     
     if not step:
@@ -283,7 +280,7 @@ def admin_add_step():
     
     return jsonify({"ok": True})
 
-@app.route("/admin/api/delete-general-step", methods=["POST"])
+@app.route("/admin/api/delete-step", methods=["POST"])
 @admin_required
 def delete_general_step():
     """حذف مرحلة من القائمة العامة"""
@@ -292,12 +289,22 @@ def delete_general_step():
     if not step_name:
         return jsonify({"error": "missing step"}), 400
     
-    # البحث عن الصف في Steps sheet
     values = steps_sheet.get_all_values()
     for idx, row in enumerate(values[1:], start=2):
         if row and row[0].strip() == step_name:
             steps_sheet.delete_rows(idx)
-            cache.clear("all_steps")
+            
+            # حذف المرحلة من جميع العملاء
+            checklist_values = checklist_sheet.get_all_values()
+            rows_to_delete = []
+            for i, r in enumerate(checklist_values[1:], start=2):
+                if len(r) >= 2 and r[1].strip() == step_name:
+                    rows_to_delete.append(i)
+            
+            for row_idx in reversed(rows_to_delete):
+                checklist_sheet.delete_rows(row_idx)
+            
+            cache.clear()
             return jsonify({"ok": True})
     
     return jsonify({"error": "step not found"}), 404
