@@ -56,7 +56,7 @@
     
     /* Steps List - Simple & Clean */
     .steps-container{display:grid;gap:8px}
-    .step-row{background:#fafbfc;padding:12px 16px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border-left:3px solid #e2e8f0;transition:.2s}
+    .step-row{background:#fafbfc;padding:12px 16px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border-left:3px solid #e2e8f0;transition:.2s;cursor:move;user-select:none}
     .step-row:hover{background:#f1f5f9;border-left-color:#3b82f6}
     .step-row.enabled{background:#fff;border-left-color:#3b82f6}
     .step-row.enabled.done{background:#f0fdf4;border-left-color:#10b981}
@@ -86,6 +86,14 @@
     .checkmark:after{content:"";position:absolute;display:none;left:6px;top:2px;width:5px;height:10px;border:solid white;border-width:0 2px 2px 0;transform:rotate(45deg)}
     .checkbox-wrapper input:checked ~ .checkmark:after{display:block}
     .checkbox-wrapper input:disabled ~ .checkmark{background:#f1f5f9;border-color:#e2e8f0;cursor:not-allowed}
+    
+    /* Drag & Drop Styles */
+    .step-row.dragging{opacity:0.5;background:#e0f2fe!important}
+    .step-row.drag-over{border-top:3px solid #3b82f6}
+    
+    .drag-handle{cursor:grab;color:#cbd5e1;font-size:18px;margin-left:8px;transition:color .2s}
+    .drag-handle:hover{color:#64748b}
+    .drag-handle:active{cursor:grabbing}
     
     .loading{text-align:center;padding:60px;color:#94a3b8}
     .spinner{display:inline-block;width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite}
@@ -125,7 +133,7 @@
   <div class="main-container">
     <!-- Sidebar -->
     <aside class="sidebar">
-      <button class="add-client-btn" onclick="openModal('addClient')">➕ إضافة عميل جديد</button>
+      <button class="add-client-btn" onclick="openModal('addClient')"> إضافة عميل جديد</button>
       
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="ابحث عن عميل...">
@@ -253,17 +261,22 @@
           </div>
           
           <div class="section-header">
-            <div class="section-title">المراحل المتاحة</div>
+            <div class="section-title">المراحل المتاحة (اسحب لإعادة الترتيب)</div>
             <button class="add-step-btn" onclick="openModal('addStep')">+ إضافة مرحلة</button>
           </div>
           
           <div class="steps-container" id="stepsList">
             ${steps.map(s => `
-              <div class="step-row ${s.enabled ? 'enabled' : ''} ${s.done ? 'done' : ''}">
-                <div class="step-info">
-                  <div class="step-name">${s.name}</div>
-                  <div class="step-status ${s.enabled ? (s.done ? 'completed' : 'active') : ''}">
-                    ${s.enabled ? (s.done ? '✓ مكتملة' : '○ قيد الانتظار') : '• غير مفعّلة'}
+              <div class="step-row ${s.enabled ? 'enabled' : ''} ${s.done ? 'done' : ''}" 
+                   draggable="true" 
+                   data-step="${escapeHtml(s.name)}">
+                <div class="step-info" style="display:flex;align-items:center;gap:8px">
+                  <span class="drag-handle">⋮⋮</span>
+                  <div>
+                    <div class="step-name">${s.name}</div>
+                    <div class="step-status ${s.enabled ? (s.done ? 'completed' : 'active') : ''}">
+                      ${s.enabled ? (s.done ? '✓ مكتملة' : '○ قيد الانتظار') : '• غير مفعّلة'}
+                    </div>
                   </div>
                 </div>
                 <div class="step-controls">
@@ -284,6 +297,10 @@
             `).join('')}
           </div>
         `;
+        
+        // تفعيل Drag & Drop
+        setTimeout(initDragAndDrop, 100);
+        
       } catch (err) {
         panel.innerHTML = '<div class="empty-state"><p style="color:#ef4444">حدث خطأ في التحميل</p></div>';
       }
@@ -375,6 +392,97 @@
     function escapeHtml(text) {
       const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
       return text.replace(/[&<>"']/g, m => map[m]);
+    }
+    
+    // ==================== Drag & Drop ====================
+    let draggedElement = null;
+    
+    function initDragAndDrop() {
+      const stepRows = document.querySelectorAll('.step-row');
+      
+      stepRows.forEach(row => {
+        row.addEventListener('dragstart', handleDragStart);
+        row.addEventListener('dragover', handleDragOver);
+        row.addEventListener('drop', handleDrop);
+        row.addEventListener('dragend', handleDragEnd);
+        row.addEventListener('dragleave', handleDragLeave);
+      });
+    }
+    
+    function handleDragStart(e) {
+      draggedElement = this;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', this.innerHTML);
+    }
+    
+    function handleDragOver(e) {
+      if (e.preventDefault) {
+        e.preventDefault();
+      }
+      
+      e.dataTransfer.dropEffect = 'move';
+      
+      if (draggedElement !== this) {
+        this.classList.add('drag-over');
+      }
+      
+      return false;
+    }
+    
+    function handleDragLeave(e) {
+      this.classList.remove('drag-over');
+    }
+    
+    function handleDrop(e) {
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      }
+      
+      if (draggedElement !== this) {
+        // تبديل المواقع
+        const allRows = Array.from(document.querySelectorAll('.step-row'));
+        const draggedIndex = allRows.indexOf(draggedElement);
+        const targetIndex = allRows.indexOf(this);
+        
+        if (draggedIndex < targetIndex) {
+          this.parentNode.insertBefore(draggedElement, this.nextSibling);
+        } else {
+          this.parentNode.insertBefore(draggedElement, this);
+        }
+        
+        saveNewOrder();
+      }
+      
+      this.classList.remove('drag-over');
+      return false;
+    }
+    
+    function handleDragEnd(e) {
+      this.classList.remove('dragging');
+      
+      document.querySelectorAll('.step-row').forEach(row => {
+        row.classList.remove('drag-over');
+      });
+    }
+    
+    async function saveNewOrder() {
+      const rows = document.querySelectorAll('.step-row');
+      const newOrder = Array.from(rows).map(row => row.dataset.step);
+      
+      try {
+        const res = await fetch('/admin/api/reorder-steps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ steps: newOrder })
+        });
+        
+        if (res.ok) {
+          console.log('✅ تم حفظ الترتيب الجديد');
+        }
+      } catch (err) {
+        console.error('خطأ في حفظ الترتيب:', err);
+      }
     }
   </script>
 </body>
