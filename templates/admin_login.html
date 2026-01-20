@@ -2,42 +2,476 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>دخول الأدمن - 249</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    @font-face {
+      font-family: 'Bahij';
+      src: url('/static/fonts/BahijTheSansArabic-Regular.woff2') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Bahij', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated Background */
+    body::before {
+      content: "";
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(251, 146, 60, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+      animation: bgFloat 20s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    @keyframes bgFloat {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(-50px, 50px) rotate(120deg); }
+      66% { transform: translate(50px, -30px) rotate(240deg); }
+    }
+
+    /* Floating Shapes */
+    .shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.1;
+      animation: float 15s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    .shape:nth-child(1) {
+      width: 80px;
+      height: 80px;
+      background: #3b82f6;
+      top: 10%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .shape:nth-child(2) {
+      width: 120px;
+      height: 120px;
+      background: #fb923c;
+      top: 70%;
+      left: 80%;
+      animation-delay: 2s;
+    }
+
+    .shape:nth-child(3) {
+      width: 60px;
+      height: 60px;
+      background: #8b5cf6;
+      top: 30%;
+      left: 85%;
+      animation-delay: 4s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-30px) rotate(180deg); }
+    }
+
+    /* Login Container */
+    .login-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+      animation: slideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 48px 40px;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Card Gradient Accent */
+    .login-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6, #fb923c, #8b5cf6, #3b82f6);
+      background-size: 200% 100%;
+      animation: gradientSlide 3s linear infinite;
+    }
+
+    @keyframes gradientSlide {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 200% 0%; }
+    }
+
+    /* Header */
+    .login-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 20px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+      transition: transform 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.05) rotate(-5deg);
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .login-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .login-header p {
+      color: #64748b;
+      font-size: 15px;
+    }
+
+    /* Error Alert */
+    .error-alert {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      padding: 14px 18px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    .error-alert::before {
+      content: "⚠";
+      font-size: 20px;
+    }
+
+    /* Form */
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      padding: 16px 20px 16px 50px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      background: #fff;
+    }
+
+    .input-wrapper input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .input-wrapper input::placeholder {
+      color: #94a3b8;
+    }
+
+    .input-icon {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      color: #94a3b8;
+      transition: color 0.3s ease;
+      pointer-events: none;
+    }
+
+    .input-wrapper input:focus + .input-icon {
+      color: #3b82f6;
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff;
+      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .submit-btn::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .submit-btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+    }
+
+    .submit-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .submit-btn span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Footer */
+    .login-footer {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .login-footer a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    .login-footer a:hover {
+      color: #fb923c;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 36px 28px;
+        border-radius: 20px;
+      }
+
+      .login-header h1 {
+        font-size: 24px;
+      }
+
+      .logo {
+        width: 80px;
+        height: 80px;
+      }
+    }
+
+    /* Loading State */
+    .submit-btn.loading {
+      pointer-events: none;
+      background: linear-gradient(135deg, #94a3b8, #64748b);
+    }
+
+    .submit-btn.loading span::after {
+      content: "";
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-right: 10px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-<body class="admin-login-page">
+<body>
+  <!-- Floating Shapes -->
+  <div class="shape"></div>
+  <div class="shape"></div>
+  <div class="shape"></div>
 
-  <div class="admin-login-wrapper">
-    <div class="admin-login-card">
-
-      <div class="admin-login-header">
-        <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249">
-        <h2>تسجيل دخول الأدمن</h2>
-        <p>الرجاء إدخال بيانات الدخول للمتابعة</p>
+  <!-- Login Container -->
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo">
+          <img src="https://i.ibb.co/7JN5w2K3/logo-removebg-preview-1.png" alt="249">
+        </div>
+        <h1>لوحة التحكم</h1>
+        <p>مرحباً بك في نظام إدارة العملاء</p>
       </div>
 
+      <!-- Error Message -->
       {% if error %}
-        <div class="admin-login-error">{{ error }}</div>
+      <div class="error-alert">
+        {{ error }}
+      </div>
       {% endif %}
 
-      <form method="post" action="/admin">
-        <div class="input-group">
-          <input name="username" required>
-          <label>اسم المستخدم</label>
+      <!-- Login Form -->
+      <form method="post" action="/admin" class="login-form" id="loginForm">
+        <div class="input-wrapper">
+          <input 
+            type="text" 
+            name="username" 
+            placeholder="اسم المستخدم" 
+            required
+            autocomplete="username"
+          >
+          <span class="input-icon">👤</span>
         </div>
 
-        <div class="input-group">
-          <input type="password" name="password" required>
-          <label>كلمة المرور</label>
+        <div class="input-wrapper">
+          <input 
+            type="password" 
+            name="password" 
+            placeholder="كلمة المرور" 
+            required
+            autocomplete="current-password"
+          >
+          <span class="input-icon">🔒</span>
         </div>
 
-        <button type="submit" class="admin-login-btn">
-          دخول
+        <button type="submit" class="submit-btn">
+          <span>تسجيل الدخول</span>
         </button>
       </form>
 
+      <div class="login-footer">
+        <a href="/">← العودة للصفحة الرئيسية</a>
+      </div>
     </div>
   </div>
 
+  <script>
+    const form = document.getElementById('loginForm');
+    const submitBtn = form.querySelector('.submit-btn');
+
+    form.addEventListener('submit', function(e) {
+      submitBtn.classList.add('loading');
+      submitBtn.querySelector('span').textContent = 'جارٍ التحقق...';
+    });
+
+    // Auto-focus on first input
+    window.addEventListener('DOMContentLoaded', () => {
+      const firstInput = form.querySelector('input');
+      if (firstInput && !firstInput.value) {
+        setTimeout(() => firstInput.focus(), 300);
+      }
+    });
+
+    // Add ripple effect on button click
+    submitBtn.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      const rect = this.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top - size / 2;
+
+      ripple.style.cssText = `
+        position: absolute;
+        width: ${size}px;
+        height: ${size}px;
+        left: ${x}px;
+        top: ${y}px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple 0.6s ease-out;
+        pointer-events: none;
+      `;
+
+      this.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+
+    // Add CSS for ripple animation
+    const style = document.createElement('style');
+    style.textContent = '@keyframes ripple { to { transform: scale(4); opacity: 0; } }';
+    document.head.appendChild(style);
+  </script>
 </body>
 </html>
