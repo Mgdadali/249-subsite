@@ -74,10 +74,48 @@
     .step-row.enabled{background:#fff;border-left-color:#3b82f6}
     .step-row.enabled.done{background:#f0fdf4;border-left-color:#10b981}
     
-    /* Drag States - Enhanced */
-    .step-row.dragging{opacity:.5;transform:scale(0.98) rotate(2deg);box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:1000;cursor:grabbing!important}
-    .step-row.drag-over{border-top:3px solid #3b82f6;margin-top:8px;transform:translateY(4px)}
-    .step-row.drag-placeholder{background:#e0f2fe;border-left-color:#3b82f6;opacity:.3;border-style:dashed}
+    /* Drag States - Super Smooth */
+    .step-row.dragging{
+      opacity:1!important;
+      transform:scale(1.05) rotate(3deg)!important;
+      box-shadow:0 20px 50px rgba(59,130,246,.35), 0 10px 20px rgba(0,0,0,.15)!important;
+      z-index:9999!important;
+      cursor:grabbing!important;
+      background:#fff!important;
+      border-left-color:#3b82f6!important;
+      transition:none!important;
+    }
+    .step-row.drag-over{
+      transform:translateY(0);
+      transition:all .2s ease;
+    }
+    .step-row.shift-down{
+      transform:translateY(70px);
+      transition:transform .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .step-row.shift-up{
+      transform:translateY(-70px);
+      transition:transform .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .step-row.drag-placeholder{
+      background:linear-gradient(90deg, #dbeafe 0%, #bfdbfe 50%, #dbeafe 100%);
+      background-size:200% 100%;
+      animation:shimmer 1.5s ease-in-out infinite;
+      border-left-color:#3b82f6;
+      border-style:dashed;
+      opacity:.6;
+      min-height:60px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#3b82f6;
+      font-weight:600;
+      font-size:14px;
+    }
+    @keyframes shimmer{
+      0%{background-position:200% 0}
+      100%{background-position:-200% 0}
+    }
     
     .step-info{flex:1}
     .step-name{font-weight:500;color:#1e293b;font-size:15px}
@@ -520,79 +558,108 @@
       return text.replace(/[&<>"']/g, m => map[m]);
     }
     
-    // ==================== Enhanced Drag & Drop ====================
+    // ==================== Ultra Smooth Drag & Drop ====================
     let draggedElement = null;
-    let placeholder = null;
+    let draggedClone = null;
+    let initialY = 0;
+    let currentY = 0;
+    let dragStartIndex = -1;
     
     function initDragAndDrop() {
-      const stepRows = document.querySelectorAll('.step-row');
+      const stepsList = document.getElementById('stepsList');
+      if (!stepsList) return;
       
-      stepRows.forEach(row => {
+      const stepRows = stepsList.querySelectorAll('.step-row');
+      
+      stepRows.forEach((row, index) => {
         row.addEventListener('dragstart', handleDragStart);
-        row.addEventListener('dragover', handleDragOver);
-        row.addEventListener('drop', handleDrop);
         row.addEventListener('dragend', handleDragEnd);
-        row.addEventListener('dragleave', handleDragLeave);
-        row.addEventListener('dragenter', handleDragEnter);
+        row.setAttribute('data-index', index);
       });
-    }
-    
-    function createPlaceholder() {
-      if (!placeholder) {
-        placeholder = document.createElement('div');
-        placeholder.className = 'step-row drag-placeholder';
-        placeholder.style.height = draggedElement ? draggedElement.offsetHeight + 'px' : '60px';
-        placeholder.innerHTML = '<div style="text-align:center;color:#3b82f6">↓ أفلت هنا ↓</div>';
-      }
-      return placeholder;
+      
+      stepsList.addEventListener('dragover', handleDragOver);
+      stepsList.addEventListener('drop', handleDrop);
     }
     
     function handleDragStart(e) {
       draggedElement = this;
-      this.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/html', this.innerHTML);
+      dragStartIndex = parseInt(this.getAttribute('data-index'));
+      initialY = e.clientY;
+      
+      // إنشاء نسخة مرئية من العنصر
+      draggedClone = this.cloneNode(true);
+      draggedClone.style.position = 'fixed';
+      draggedClone.style.left = this.getBoundingClientRect().left + 'px';
+      draggedClone.style.top = this.getBoundingClientRect().top + 'px';
+      draggedClone.style.width = this.offsetWidth + 'px';
+      draggedClone.style.pointerEvents = 'none';
+      draggedClone.style.zIndex = '10000';
+      draggedClone.style.opacity = '0';
+      document.body.appendChild(draggedClone);
       
       setTimeout(() => {
-        const ph = createPlaceholder();
-        this.parentNode.insertBefore(ph, this);
-        this.style.display = 'none';
-      }, 0);
-    }
-    
-    function handleDragEnter(e) {
-      e.preventDefault();
-      if (this !== draggedElement && this !== placeholder) {
-        this.classList.add('drag-over');
-      }
+        this.classList.add('dragging');
+        this.style.opacity = '0';
+        if (draggedClone) {
+          draggedClone.style.opacity = '1';
+          draggedClone.style.transform = 'scale(1.05) rotate(3deg)';
+          draggedClone.style.transition = 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        }
+      }, 10);
+      
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', this.innerHTML);
     }
     
     function handleDragOver(e) {
-      if (e.preventDefault) {
-        e.preventDefault();
-      }
-      
+      e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       
-      if (this !== draggedElement && this !== placeholder) {
-        const container = this.parentNode;
-        const allRows = Array.from(container.querySelectorAll('.step-row:not(.dragging):not(.drag-placeholder)'));
-        const afterElement = getDragAfterElement(container, e.clientY);
+      currentY = e.clientY;
+      
+      // تحريك النسخة المرئية
+      if (draggedClone) {
+        const deltaY = currentY - initialY;
+        const rect = draggedElement.getBoundingClientRect();
+        draggedClone.style.top = (rect.top + deltaY) + 'px';
+      }
+      
+      // تحديد العنصر الذي نمر فوقه
+      const afterElement = getDragAfterElement(this, e.clientY);
+      const allRows = Array.from(this.querySelectorAll('.step-row'));
+      
+      // إزالة جميع الكلاسات السابقة
+      allRows.forEach(row => {
+        row.classList.remove('shift-down', 'shift-up');
+      });
+      
+      // تطبيق التأثير على العناصر
+      if (draggedElement) {
+        const currentIndex = allRows.indexOf(draggedElement);
+        let targetIndex = afterElement ? allRows.indexOf(afterElement) : allRows.length;
         
-        if (placeholder) {
-          if (afterElement == null) {
-            container.appendChild(placeholder);
+        allRows.forEach((row, index) => {
+          if (row === draggedElement) return;
+          
+          if (currentIndex < targetIndex) {
+            // السحب للأسفل
+            if (index > currentIndex && index < targetIndex) {
+              row.classList.add('shift-up');
+            }
           } else {
-            container.insertBefore(placeholder, afterElement);
+            // السحب للأعلى
+            if (index >= targetIndex && index < currentIndex) {
+              row.classList.add('shift-down');
+            }
           }
-        }
+        });
       }
       
       return false;
     }
     
     function getDragAfterElement(container, y) {
-      const draggableElements = [...container.querySelectorAll('.step-row:not(.dragging):not(.drag-placeholder)')];
+      const draggableElements = [...container.querySelectorAll('.step-row:not(.dragging)')];
       
       return draggableElements.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
@@ -606,47 +673,65 @@
       }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
     
-    function handleDragLeave(e) {
-      this.classList.remove('drag-over');
-    }
-    
     function handleDrop(e) {
-      if (e.stopPropagation) {
-        e.stopPropagation();
-      }
-      
       e.preventDefault();
+      e.stopPropagation();
       
-      if (placeholder && draggedElement) {
-        placeholder.parentNode.insertBefore(draggedElement, placeholder);
-        draggedElement.style.display = '';
-        placeholder.remove();
-        
-        updateStepsOrder();
+      if (!draggedElement) return;
+      
+      const afterElement = getDragAfterElement(this, e.clientY);
+      const allRows = Array.from(this.querySelectorAll('.step-row'));
+      
+      // إعادة ترتيب العناصر في DOM
+      if (afterElement == null) {
+        this.appendChild(draggedElement);
+      } else {
+        this.insertBefore(draggedElement, afterElement);
       }
       
-      this.classList.remove('drag-over');
+      // إزالة جميع التأثيرات
+      allRows.forEach(row => {
+        row.classList.remove('shift-down', 'shift-up', 'drag-over');
+      });
+      
+      updateStepsOrder();
+      
       return false;
     }
     
     function handleDragEnd(e) {
-      this.classList.remove('dragging');
-      this.style.display = '';
-      
-      if (placeholder && placeholder.parentNode) {
-        placeholder.remove();
+      // إزالة النسخة المرئية مع تأثير
+      if (draggedClone) {
+        draggedClone.style.opacity = '0';
+        draggedClone.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+          if (draggedClone && draggedClone.parentNode) {
+            draggedClone.parentNode.removeChild(draggedClone);
+          }
+          draggedClone = null;
+        }, 200);
       }
       
-      document.querySelectorAll('.step-row').forEach(row => {
-        row.classList.remove('drag-over');
+      // إعادة العنصر الأصلي
+      if (draggedElement) {
+        draggedElement.style.opacity = '';
+        draggedElement.classList.remove('dragging');
+      }
+      
+      // إزالة جميع التأثيرات
+      const allRows = document.querySelectorAll('.step-row');
+      allRows.forEach(row => {
+        row.classList.remove('shift-down', 'shift-up', 'drag-over');
       });
       
       draggedElement = null;
-      placeholder = null;
+      dragStartIndex = -1;
+      initialY = 0;
+      currentY = 0;
     }
     
     function updateStepsOrder() {
-      const rows = document.querySelectorAll('.step-row:not(.drag-placeholder)');
+      const rows = document.querySelectorAll('.step-row');
       currentStepsOrder = Array.from(rows).map(row => row.dataset.step);
       
       const orderChanged = JSON.stringify(currentStepsOrder) !== JSON.stringify(originalStepsOrder);
