@@ -323,13 +323,17 @@
         if (!confirm('لديك تغييرات غير محفوظة. هل تريد المتابعة بدون حفظ؟')) {
           return;
         }
-        resetChanges();
       }
+      
+      // إعادة تعيين كل شيء
+      resetChanges();
       
       currentClient = { code, name, service };
       
       document.querySelectorAll('.client-card').forEach(el => el.classList.remove('active'));
-      event.target.closest('.client-card').classList.add('active');
+      if (event && event.target) {
+        event.target.closest('.client-card').classList.add('active');
+      }
       
       const panel = document.getElementById('mainContent');
       panel.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
@@ -338,6 +342,7 @@
         const res = await fetch(`/admin/api/client/${code}/all-steps`);
         const steps = await res.json();
         
+        // حفظ الترتيب الأصلي
         originalStepsOrder = steps.map(s => s.name);
         currentStepsOrder = [...originalStepsOrder];
         
@@ -376,7 +381,10 @@
           </div>
         `;
         
-        setTimeout(initDragAndDrop, 100);
+        // تأخير بسيط قبل تفعيل drag & drop لضمان جاهزية DOM
+        setTimeout(() => {
+          initDragAndDrop();
+        }, 100);
         
       } catch (err) {
         panel.innerHTML = '<div class="empty-state"><p style="color:#ef4444">حدث خطأ في التحميل</p></div>';
@@ -625,24 +633,33 @@
     let initialY = 0;
     let currentY = 0;
     let dragStartIndex = -1;
+    let isDragging = false;
     
     function initDragAndDrop() {
       const stepsList = document.getElementById('stepsList');
       if (!stepsList) return;
       
-      const stepRows = stepsList.querySelectorAll('.step-row');
+      // إزالة جميع المستمعين السابقين
+      const oldStepsList = stepsList.cloneNode(true);
+      stepsList.parentNode.replaceChild(oldStepsList, stepsList);
+      
+      const newStepsList = document.getElementById('stepsList');
+      const stepRows = newStepsList.querySelectorAll('.step-row');
       
       stepRows.forEach((row, index) => {
+        row.setAttribute('data-index', index);
         row.addEventListener('dragstart', handleDragStart);
         row.addEventListener('dragend', handleDragEnd);
-        row.setAttribute('data-index', index);
       });
       
-      stepsList.addEventListener('dragover', handleDragOver);
-      stepsList.addEventListener('drop', handleDrop);
+      newStepsList.addEventListener('dragover', handleDragOver);
+      newStepsList.addEventListener('drop', handleDrop);
     }
     
     function handleDragStart(e) {
+      if (isDragging) return;
+      isDragging = true;
+      
       draggedElement = this;
       dragStartIndex = parseInt(this.getAttribute('data-index'));
       initialY = e.clientY;
@@ -656,11 +673,17 @@
       draggedClone.style.pointerEvents = 'none';
       draggedClone.style.zIndex = '10000';
       draggedClone.style.opacity = '0';
+      
+      // إزالة خاصية draggable من النسخة لتجنب التداخل
+      draggedClone.setAttribute('draggable', 'false');
+      
       document.body.appendChild(draggedClone);
       
       setTimeout(() => {
-        this.classList.add('dragging');
-        this.style.opacity = '0';
+        if (draggedElement) {
+          draggedElement.classList.add('dragging');
+          draggedElement.style.opacity = '0';
+        }
         if (draggedClone) {
           draggedClone.style.opacity = '1';
           draggedClone.style.transform = 'scale(1.05) rotate(3deg)';
@@ -674,12 +697,14 @@
     
     function handleDragOver(e) {
       e.preventDefault();
+      if (!isDragging) return;
+      
       e.dataTransfer.dropEffect = 'move';
       
       currentY = e.clientY;
       
       // تحريك النسخة المرئية
-      if (draggedClone) {
+      if (draggedClone && draggedElement) {
         const deltaY = currentY - initialY;
         const rect = draggedElement.getBoundingClientRect();
         draggedClone.style.top = (rect.top + deltaY) + 'px';
@@ -738,7 +763,7 @@
       e.preventDefault();
       e.stopPropagation();
       
-      if (!draggedElement) return;
+      if (!draggedElement || !isDragging) return;
       
       const afterElement = getDragAfterElement(this, e.clientY);
       const allRows = Array.from(this.querySelectorAll('.step-row'));
@@ -761,6 +786,8 @@
     }
     
     function handleDragEnd(e) {
+      if (!isDragging) return;
+      
       // إزالة النسخة المرئية مع تأثير
       if (draggedClone) {
         draggedClone.style.opacity = '0';
@@ -789,6 +816,7 @@
       dragStartIndex = -1;
       initialY = 0;
       currentY = 0;
+      isDragging = false;
     }
     
     function updateStepsOrder() {
