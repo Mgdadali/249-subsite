@@ -125,6 +125,32 @@
     
     .step-controls{display:flex;gap:8px;align-items:center}
     
+    /* Delete Step Button */
+    .delete-step-btn{
+      width:32px;
+      height:32px;
+      border:none;
+      background:linear-gradient(135deg,#fee2e2,#fecaca);
+      color:#dc2626;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition:all .2s ease;
+      opacity:.7;
+    }
+    .delete-step-btn:hover{
+      opacity:1;
+      background:linear-gradient(135deg,#fca5a5,#f87171);
+      transform:scale(1.1) rotate(10deg);
+      box-shadow:0 4px 12px rgba(220,38,38,.3);
+    }
+    .delete-step-btn:active{
+      transform:scale(0.95);
+    }
+    
     /* Toggle Switch */
     .switch{position:relative;width:44px;height:24px;cursor:pointer}
     .switch input{opacity:0;width:0;height:0}
@@ -384,6 +410,9 @@
                      onchange="toggleEnabledPending('${escapeHtml(s.name)}', this.checked)">
               <span class="slider"></span>
             </label>
+            <button class="delete-step-btn" onclick="deleteStep('${escapeHtml(s.name)}')" title="حذف المرحلة نهائياً">
+              🗑️
+            </button>
           </div>
         </div>
       `).join('');
@@ -546,10 +575,42 @@
         if (res.ok) {
           alert('✅ تم إضافة المرحلة بنجاح');
           closeModal('addStep');
-          if (currentClient) loadClient(currentClient.code, currentClient.name, currentClient.service);
+          // إعادة تحميل العميل الحالي دون إعادة تعيين التغييرات
+          if (currentClient) {
+            resetChanges(); // مهم: إعادة تعيين التغييرات قبل التحميل
+            loadClient(currentClient.code, currentClient.name, currentClient.service);
+          }
         }
       } catch (err) {
         alert('حدث خطأ');
+      }
+    }
+    
+    async function deleteStep(stepName) {
+      if (!confirm(`هل أنت متأكد من حذف المرحلة "${stepName}" نهائياً؟\n\nسيتم حذفها من جميع العملاء!`)) {
+        return;
+      }
+      
+      try {
+        const res = await fetch('/admin/api/delete-step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ step: stepName })
+        });
+        
+        if (res.ok) {
+          alert('✅ تم حذف المرحلة بنجاح');
+          if (currentClient) {
+            resetChanges();
+            loadClient(currentClient.code, currentClient.name, currentClient.service);
+          }
+        } else {
+          const data = await res.json();
+          alert('❌ خطأ: ' + (data.error || 'فشل الحذف'));
+        }
+      } catch (err) {
+        alert('حدث خطأ في الحذف');
+        console.error(err);
       }
     }
     
