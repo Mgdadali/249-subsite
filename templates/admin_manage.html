@@ -152,26 +152,27 @@
     }
     
     /* Toggle Switch */
-    .switch{position:relative;width:44px;height:24px;cursor:pointer}
+    .switch{position:relative;width:44px;height:24px;cursor:pointer;z-index:10}
     .switch input{opacity:0;width:0;height:0}
-    .slider{position:absolute;inset:0;background:#cbd5e1;border-radius:24px;transition:.3s}
+    .slider{position:absolute;inset:0;background:#cbd5e1;border-radius:24px;transition:.3s;cursor:pointer}
     .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 2px 4px rgba(0,0,0,.2)}
     .switch input:checked + .slider{background:#3b82f6}
     .switch input:checked + .slider:before{transform:translateX(20px)}
     
     /* Checkbox */
-    .checkbox-wrapper{position:relative;width:22px;height:22px}
-    .checkbox-wrapper input{position:absolute;opacity:0;cursor:pointer;width:100%;height:100%}
-    .checkmark{position:absolute;top:0;left:0;height:22px;width:22px;background:#fff;border:2px solid #cbd5e1;border-radius:5px;transition:.2s}
+    .checkbox-wrapper{position:relative;width:22px;height:22px;cursor:pointer;z-index:10}
+    .checkbox-wrapper input{position:absolute;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2}
+    .checkmark{position:absolute;top:0;left:0;height:22px;width:22px;background:#fff;border:2px solid #cbd5e1;border-radius:5px;transition:.2s;pointer-events:none}
     .checkbox-wrapper:hover .checkmark{border-color:#3b82f6}
     .checkbox-wrapper input:checked ~ .checkmark{background:#10b981;border-color:#10b981}
     .checkmark:after{content:"";position:absolute;display:none;left:6px;top:2px;width:5px;height:10px;border:solid white;border-width:0 2px 2px 0;transform:rotate(45deg)}
     .checkbox-wrapper input:checked ~ .checkmark:after{display:block}
     .checkbox-wrapper input:disabled ~ .checkmark{background:#f1f5f9;border-color:#e2e8f0;cursor:not-allowed}
     
-    .drag-handle{cursor:grab;color:#cbd5e1;font-size:18px;margin-left:8px;transition:color .2s}
+    .drag-handle{cursor:grab;color:#cbd5e1;font-size:18px;margin-left:8px;transition:color .2s;user-select:none}
     .drag-handle:hover{color:#64748b}
     .drag-handle:active{cursor:grabbing}
+    .step-row.dragging .drag-handle{cursor:grabbing}
     
     .loading{text-align:center;padding:60px;color:#94a3b8}
     .spinner{display:inline-block;width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite}
@@ -211,7 +212,7 @@
   <div class="main-container">
     <!-- Sidebar -->
     <aside class="sidebar">
-      <button class="add-client-btn" onclick="openModal('addClient')"> إضافة عميل جديد</button>
+      <button class="add-client-btn" onclick="openModal('addClient')">➕ إضافة عميل جديد</button>
       
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="ابحث عن عميل...">
@@ -397,28 +398,30 @@
              draggable="true" 
              data-step="${escapeHtml(s.name)}">
           <div class="step-info" style="display:flex;align-items:center;gap:8px">
-            <span class="drag-handle">⋮⋮</span>
-            <div>
+            <span class="drag-handle" onmousedown="event.stopPropagation()">⋮⋮</span>
+            <div style="pointer-events:none">
               <div class="step-name">${s.name}</div>
               <div class="step-status ${s.enabled ? (s.done ? 'completed' : 'active') : ''}">
                 ${s.enabled ? (s.done ? '✓ مكتملة' : '○ قيد الانتظار') : '• غير مفعّلة'}
               </div>
             </div>
           </div>
-          <div class="step-controls">
+          <div class="step-controls" style="pointer-events:auto;display:flex;gap:8px;align-items:center">
             ${s.enabled ? `
-              <div class="checkbox-wrapper" title="تعليم كمكتملة">
+              <div class="checkbox-wrapper" title="تعليم كمكتملة" onclick="event.stopPropagation()">
                 <input type="checkbox" ${s.done ? 'checked' : ''} 
+                       onclick="event.stopPropagation()"
                        onchange="toggleDonePending('${escapeHtml(s.name)}', this.checked)">
                 <span class="checkmark"></span>
               </div>
             ` : ''}
-            <label class="switch" title="${s.enabled ? 'إلغاء التفعيل' : 'تفعيل'}">
+            <label class="switch" title="${s.enabled ? 'إلغاء التفعيل' : 'تفعيل'}" onclick="event.stopPropagation()">
               <input type="checkbox" ${s.enabled ? 'checked' : ''} 
+                     onclick="event.stopPropagation()"
                      onchange="toggleEnabledPending('${escapeHtml(s.name)}', this.checked)">
               <span class="slider"></span>
             </label>
-            <button class="delete-step-btn" onclick="deleteStep('${escapeHtml(s.name)}')" title="حذف المرحلة نهائياً">
+            <button class="delete-step-btn" onclick="event.stopPropagation(); deleteStep('${escapeHtml(s.name)}')" title="حذف المرحلة نهائياً">
               🗑️
             </button>
           </div>
@@ -477,11 +480,26 @@
       try {
         // 1. حفظ الترتيب الجديد
         if (pendingChanges.order) {
-          await fetch('/admin/api/reorder-steps', {
+          // إزالة أي تكرار قبل الإرسال
+          const uniqueSteps = [...new Set(currentStepsOrder)];
+          
+          console.log('📤 إرسال ترتيب جديد:', {
+            total: uniqueSteps.length,
+            steps: uniqueSteps
+          });
+          
+          const orderRes = await fetch('/admin/api/reorder-steps', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ steps: currentStepsOrder })
+            body: JSON.stringify({ steps: uniqueSteps })
           });
+          
+          if (!orderRes.ok) {
+            throw new Error('فشل في حفظ الترتيب');
+          }
+          
+          const orderData = await orderRes.json();
+          console.log('✅ تم حفظ الترتيب:', orderData);
         }
         
         // 2. حفظ تغييرات التفعيل
@@ -506,11 +524,15 @@
         
         alert('✅ تم حفظ جميع التغييرات بنجاح!');
         resetChanges();
-        loadClient(currentClient.code, currentClient.name, currentClient.service);
+        
+        // إعادة تحميل العميل للتأكد من مزامنة البيانات
+        if (currentClient) {
+          await loadClient(currentClient.code, currentClient.name, currentClient.service);
+        }
         
       } catch (err) {
-        alert('❌ حدث خطأ أثناء الحفظ');
-        console.error(err);
+        alert('❌ حدث خطأ أثناء الحفظ: ' + err.message);
+        console.error('خطأ في الحفظ:', err);
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = '💾 حفظ التغييرات';
@@ -821,7 +843,19 @@
     
     function updateStepsOrder() {
       const rows = document.querySelectorAll('.step-row');
-      currentStepsOrder = Array.from(rows).map(row => row.dataset.step);
+      const rawOrder = Array.from(rows).map(row => row.dataset.step);
+      
+      // إزالة أي تكرار (في حالة حدوثه بسبب bug)
+      currentStepsOrder = [...new Set(rawOrder)];
+      
+      // تحذير في الكونسول إذا كان هناك تكرار
+      if (rawOrder.length !== currentStepsOrder.length) {
+        console.warn('⚠️ تم اكتشاف مراحل مكررة وتم تنظيفها:', {
+          before: rawOrder.length,
+          after: currentStepsOrder.length,
+          duplicates: rawOrder.filter((item, index) => rawOrder.indexOf(item) !== index)
+        });
+      }
       
       const orderChanged = JSON.stringify(currentStepsOrder) !== JSON.stringify(originalStepsOrder);
       pendingChanges.order = orderChanged;
