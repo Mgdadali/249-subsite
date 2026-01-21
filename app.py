@@ -159,7 +159,7 @@ def admin_login():
         for admin in admins_sheet.get_all_records():
             if admin.get("Username") == username and str(admin.get("Password")) == password:
                 session["admin"] = username
-                return redirect("/admin/manage")  # توجيه مباشر لصفحة الإدارة
+                return redirect("/admin/manage")
         
         return render_template("admin_login.html", error="بيانات غير صحيحة")
     
@@ -215,8 +215,8 @@ def admin_all_steps(code):
     for step in all_steps:
         result.append({
             "name": step,
-            "enabled": step in client_checklist,  # هل المرحلة مفعّلة للعميل؟
-            "done": client_checklist.get(step, False)  # هل مكتملة؟
+            "enabled": step in client_checklist,
+            "done": client_checklist.get(step, False)
         })
     
     return jsonify(result)
@@ -275,6 +275,11 @@ def admin_add_step():
     if not step:
         return jsonify({"error": "missing step"}), 400
     
+    # التحقق من عدم وجود المرحلة مسبقاً
+    existing_steps = get_all_steps(use_cache=False)
+    if step in existing_steps:
+        return jsonify({"error": "step already exists"}), 400
+    
     steps_sheet.append_row([step])
     cache.clear("all_steps")
     
@@ -301,6 +306,7 @@ def delete_general_step():
                 if len(r) >= 2 and r[1].strip() == step_name:
                     rows_to_delete.append(i)
             
+            # حذف من الأسفل للأعلى لتجنب تغيير الأرقام
             for row_idx in reversed(rows_to_delete):
                 checklist_sheet.delete_rows(row_idx)
             
@@ -312,25 +318,45 @@ def delete_general_step():
 @app.route("/admin/api/reorder-steps", methods=["POST"])
 @admin_required
 def reorder_steps():
-    """إعادة ترتيب المراحل العامة"""
+    """إعادة ترتيب المراحل العامة - FIX: منع التكرار"""
     new_order = request.json.get("steps", [])
     
     if not new_order:
         return jsonify({"error": "missing steps"}), 400
     
     try:
+        # التأكد من عدم وجود تكرار في الترتيب الجديد
+        unique_steps = list(dict.fromkeys(new_order))  # إزالة التكرار مع الحفاظ على الترتيب
+        
+        if len(unique_steps) != len(new_order):
+            print(f"⚠️ تحذير: تم اكتشاف مراحل مكررة في الطلب. الأصلي: {len(new_order)}, بعد التنظيف: {len(unique_steps)}")
+        
+        # قراءة جميع المراحل الحالية
+        current_steps = get_all_steps(use_cache=False)
+        
+        # التأكد من أن جميع المراحل في الترتيب الجديد موجودة فعلاً
+        valid_steps = [s for s in unique_steps if s in current_steps]
+        
+        if len(valid_steps) != len(current_steps):
+            print(f"⚠️ تحذير: عدد المراحل غير متطابق. الحالية: {len(current_steps)}, الجديدة: {len(valid_steps)}")
+        
         # حذف جميع الصفوف الحالية (ما عدا الهيدر)
         row_count = steps_sheet.row_count
         if row_count > 1:
             steps_sheet.delete_rows(2, row_count)
         
-        # إضافة المراحل بالترتيب الجديد
-        for step in new_order:
+        # إضافة المراحل بالترتيب الجديد (واحدة تلو الأخرى)
+        for step in valid_steps:
             steps_sheet.append_row([step])
         
         cache.clear("all_steps")
-        return jsonify({"ok": True})
+        
+        print(f"✅ تم إعادة ترتيب {len(valid_steps)} مرحلة بنجاح")
+        
+        return jsonify({"ok": True, "count": len(valid_steps)})
+        
     except Exception as e:
+        print(f"❌ خطأ في إعادة الترتيب: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 # ================== Run ==================
